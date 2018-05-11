@@ -28,6 +28,7 @@ class Infill
     coord_t infill_line_width; //!< The line width of the infill lines to generate
     coord_t line_distance; //!< The distance between two infill lines / polygons
     coord_t infill_overlap; //!< the distance by which to overlap with the actual area within which to generate infill
+    int infill_multiplier; //!< the number of infill lines next to each other
     double fill_angle; //!< for linear infill types: the angle of the infill lines (or the angle of the grid)
     coord_t z; //!< height of the layer for which we generate infill
     coord_t shift; //!< shift of the scanlines in the direction perpendicular to the fill_angle
@@ -58,6 +59,7 @@ public:
         , int infill_line_width
         , int line_distance
         , int infill_overlap
+        , int infill_multiplier
         , double fill_angle
         , int64_t z
         , int64_t shift
@@ -78,6 +80,7 @@ public:
     , infill_line_width(infill_line_width)
     , line_distance(line_distance)
     , infill_overlap(infill_overlap)
+    , infill_multiplier(infill_multiplier)
     , fill_angle(fill_angle)
     , z(z)
     , shift(shift)
