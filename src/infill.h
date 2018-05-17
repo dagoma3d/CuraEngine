@@ -113,7 +113,7 @@ private:
     /*!
      * Generate the infill pattern without the infill_multiplier functionality
      */
-    void _generate(Polygons& result_polygons, Polygons& result_lines, const SpaceFillingTreeFill* cross_fill_pattern = nullptr, const SliceMeshStorage* mesh = nullptr);
+    void _generate(Polygons& result_polygons, Polygons& result_lines, const SierpinskiFillProvider* cross_fill_pattern = nullptr, const SliceMeshStorage* mesh = nullptr);
 
     /*!
      * Multiply the infill lines, so that any single line becomes [infill_multiplier] lines next to each other.
