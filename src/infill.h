@@ -23,6 +23,7 @@ class Infill
 
     EFillMethod pattern; //!< the space filling pattern of the infill to generate
     bool zig_zaggify; //!< Whether to connect the end pieces of the support lines via the wall
+    bool connect_polygons; //!< Whether to connect as much polygons together into a single path
     const Polygons& in_outline; //!< a reference polygon for getting the actual area within which to generate infill (see outline_offset)
     coord_t outline_offset; //!< Offset from Infill::in_outline to get the actual area within which to generate infill
     coord_t infill_line_width; //!< The line width of the infill lines to generate
@@ -53,6 +54,7 @@ public:
      */
     Infill(EFillMethod pattern
         , bool zig_zaggify
+        , bool connect_polygons
         , const Polygons& in_outline
         , int outline_offset
         , int infill_line_width
@@ -73,6 +75,7 @@ public:
     )
     : pattern(pattern)
     , zig_zaggify(zig_zaggify)
+    , connect_polygons(connect_polygons)
     , in_outline(in_outline)
     , outline_offset(outline_offset)
     , infill_line_width(infill_line_width)
