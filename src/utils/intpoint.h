@@ -19,6 +19,8 @@ Integer points are used to avoid floating point rounding errors, and because Cli
 
 #include <iostream> // auto-serialization / auto-toString()
 
+#include <type_traits> // for operations on any arithmetic number type
+
 #define INT2MM(n) (double(n) / 1000.0)
 #define INT2MM2(n) (double(n) / 1000000.0)
 #define MM2INT(n) (coord_t(std::round((n) * 1000)))
@@ -57,9 +59,10 @@ public:
 
     Point3 operator+(const Point3& p) const { return Point3(x+p.x, y+p.y, z+p.z); }
     Point3 operator-(const Point3& p) const { return Point3(x-p.x, y-p.y, z-p.z); }
-    Point3 operator/(const coord_t i) const { return Point3(x/i, y/i, z/i); }
-    Point3 operator*(const coord_t i) const { return Point3(x*i, y*i, z*i); }
-    Point3 operator*(const double d) const { return Point3(d*x, d*y, d*z); }
+    template<typename num_t, typename = typename std::enable_if<std::is_arithmetic<num_t>::value, num_t>::type>
+    Point3 operator/(const num_t i) const { return Point3(x/i, y/i, z/i); }
+    template<typename num_t, typename = typename std::enable_if<std::is_arithmetic<num_t>::value, num_t>::type>
+    Point3 operator*(const num_t i) const { return Point3(x*i, y*i, z*i); }
 
     Point3& operator += (const Point3& p) { x += p.x; y += p.y; z += p.z; return *this; }
     Point3& operator -= (const Point3& p) { x -= p.x; y -= p.y; z -= p.z; return *this; }
@@ -135,12 +138,10 @@ public:
  */
 static Point3 no_point3(std::numeric_limits<coord_t>::min(), std::numeric_limits<coord_t>::min(), std::numeric_limits<coord_t>::min());
 
-inline Point3 operator*(const coord_t i, const Point3& rhs) {
-    return rhs * i;
-}
 
-inline Point3 operator*(const double d, const Point3& rhs) {
-    return rhs * d;
+template<typename num_t, typename = typename std::enable_if<std::is_arithmetic<num_t>::value, num_t>::type>
+inline Point3 operator*(const num_t i, const Point3& rhs) {
+    return rhs * i;
 }
 
 /* 64bit Points are used mostly throughout the code, these are the 2D points from ClipperLib */
