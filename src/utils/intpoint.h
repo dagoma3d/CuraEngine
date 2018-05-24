@@ -21,9 +21,9 @@ Integer points are used to avoid floating point rounding errors, and because Cli
 
 #define INT2MM(n) (double(n) / 1000.0)
 #define INT2MM2(n) (double(n) / 1000000.0)
-#define MM2INT(n) (int64_t(std::round((n) * 1000)))
-#define MM2_2INT(n) (int64_t(std::round((n) * 1000000)))
-#define MM3_2INT(n) (int64_t(std::round((n) * 1000000000)))
+#define MM2INT(n) (coord_t(std::round((n) * 1000)))
+#define MM2_2INT(n) (coord_t(std::round((n) * 1000000)))
+#define MM3_2INT(n) (coord_t(std::round((n) * 1000000000)))
 
 #define INT2MICRON(n) ((n) / 1)
 #define MICRON2INT(n) ((n) * 1)
@@ -46,17 +46,19 @@ Integer points are used to avoid floating point rounding errors, and because Cli
 namespace cura
 {
 
+using coord_t = ClipperLib::cInt;
+
 class Point3
 {
 public:
-    int32_t x,y,z;
+    coord_t x,y,z;
     Point3() {}
-    Point3(const int32_t _x, const int32_t _y, const int32_t _z): x(_x), y(_y), z(_z) {}
+    Point3(const coord_t _x, const coord_t _y, const coord_t _z): x(_x), y(_y), z(_z) {}
 
     Point3 operator+(const Point3& p) const { return Point3(x+p.x, y+p.y, z+p.z); }
     Point3 operator-(const Point3& p) const { return Point3(x-p.x, y-p.y, z-p.z); }
-    Point3 operator/(const int32_t i) const { return Point3(x/i, y/i, z/i); }
-    Point3 operator*(const int32_t i) const { return Point3(x*i, y*i, z*i); }
+    Point3 operator/(const coord_t i) const { return Point3(x/i, y/i, z/i); }
+    Point3 operator*(const coord_t i) const { return Point3(x*i, y*i, z*i); }
     Point3 operator*(const double d) const { return Point3(d*x, d*y, d*z); }
 
     Point3& operator += (const Point3& p) { x += p.x; y += p.y; z += p.z; return *this; }
@@ -75,14 +77,14 @@ public:
     }
 
 
-    int32_t max() const
+    coord_t max() const
     {
         if (x > y && x > z) return x;
         if (y > z) return y;
         return z;
     }
 
-    bool testLength(int32_t len) const
+    bool testLength(coord_t len) const
     {
         if (x > len || x < -len)
             return false;
@@ -93,12 +95,12 @@ public:
         return vSize2() <= len*len;
     }
 
-    int64_t vSize2() const
+    coord_t vSize2() const
     {
-        return int64_t(x)*int64_t(x)+int64_t(y)*int64_t(y)+int64_t(z)*int64_t(z);
+        return x * x + y * y + z * z;
     }
 
-    int32_t vSize() const
+    coord_t vSize() const
     {
         return sqrt(vSize2());
     }
@@ -119,7 +121,7 @@ public:
             x*p.y-y*p.x);
     }
 
-    int64_t dot(const Point3& p) const
+    coord_t dot(const Point3& p) const
     {
         return x*p.x + y*p.y + z*p.z;
     }
@@ -131,17 +133,15 @@ public:
  *
  * Its value is something that is rarely used.
  */
-static Point3 no_point3(std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::min(), std::numeric_limits<int32_t>::min());
+static Point3 no_point3(std::numeric_limits<coord_t>::min(), std::numeric_limits<coord_t>::min(), std::numeric_limits<coord_t>::min());
 
-inline Point3 operator*(const int32_t i, const Point3& rhs) {
+inline Point3 operator*(const coord_t i, const Point3& rhs) {
     return rhs * i;
 }
 
 inline Point3 operator*(const double d, const Point3& rhs) {
     return rhs * d;
 }
-
-using coord_t = ClipperLib::cInt;
 
 /* 64bit Points are used mostly throughout the code, these are the 2D points from ClipperLib */
 typedef ClipperLib::IntPoint Point;
@@ -162,7 +162,7 @@ INLINE Point operator+(const Point& p0, const Point& p1) { return Point(p0.X+p1.
 INLINE Point operator-(const Point& p0, const Point& p1) { return Point(p0.X-p1.X, p0.Y-p1.Y); }
 template<typename T> INLINE Point operator*(const Point& p0, const T i) { return Point(p0.X * i, p0.Y * i); }
 template<typename T> INLINE Point operator*(const T i, const Point& p0) { return p0 * i; }
-INLINE Point operator/(const Point& p0, const int32_t i) { return Point(p0.X/i, p0.Y/i); }
+INLINE Point operator/(const Point& p0, const coord_t i) { return Point(p0.X/i, p0.Y/i); }
 INLINE Point operator/(const Point& p0, const Point& p1) { return Point(p0.X/p1.X, p0.Y/p1.Y); }
 
 INLINE Point& operator += (Point& p0, const Point& p1) { p0.X += p1.X; p0.Y += p1.Y; return p0; }
@@ -183,7 +183,7 @@ INLINE coord_t getCoord(const Point& p, unsigned char dim)
     }
 }
 
-INLINE int64_t vSize2(const Point& p0)
+INLINE coord_t vSize2(const Point& p0)
 {
     return p0.X*p0.X+p0.Y*p0.Y;
 }
@@ -201,7 +201,7 @@ INLINE bool shorterThen(const Point& p0, int32_t len)
     return vSize2(p0) <= len*len;
 }
 
-INLINE int64_t vSize(const Point& p0)
+INLINE coord_t vSize(const Point& p0)
 {
     return sqrt(vSize2(p0));
 }
@@ -213,9 +213,9 @@ INLINE double vSizeMM(const Point& p0)
     return sqrt(fx*fx+fy*fy);
 }
 
-INLINE Point normal(const Point& p0, int64_t len)
+INLINE Point normal(const Point& p0, coord_t len)
 {
-    int64_t _len = vSize(p0);
+    coord_t _len = vSize(p0);
     if (_len < 1)
         return Point(len, 0);
     return p0 * len / _len;
@@ -233,7 +233,7 @@ INLINE Point rotate(const Point& p0, double angle)
     return Point(cos_component * p0.X - sin_component * p0.Y, sin_component * p0.X + cos_component * p0.Y);
 }
 
-INLINE int64_t dot(const Point& p0, const Point& p1)
+INLINE coord_t dot(const Point& p0, const Point& p1)
 {
     return p0.X * p1.X + p0.Y * p1.Y;
 }
