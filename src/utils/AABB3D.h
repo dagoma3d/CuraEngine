@@ -96,6 +96,11 @@ struct AABB3D
      * Get the XY components of this AABB
      */
     AABB getAABB() const;
+
+    /*!
+     * Get the size as the vecgor from min to max
+     */
+    Point3 size() const;
 };
 
 }//namespace cura

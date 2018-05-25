@@ -95,5 +95,10 @@ AABB AABB3D::getAABB() const
     return AABB(Point(min.x, min.y), Point(max.x, max.y));
 }
 
+Point3 AABB3D::size() const
+{
+    return max - min;
+}
+
 }//namespace cura
 
