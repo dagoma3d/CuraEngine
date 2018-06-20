@@ -131,6 +131,8 @@ public:
     int initialLayerThickness;
     int filamentDiameter;
     int filamentFlow;
+    int filamentDiameter2;
+    int filamentFlow2;
     int layer0extrusionWidth;
     int extrusionWidth;
     int insetCount;
@@ -142,9 +144,11 @@ public:
 
     //Retraction settings
     int retractionAmount;
+    int retractionAmount2;
     int retractionAmountPrime;
     int retractionAmountExtruderSwitch;
     int retractionSpeed;
+    int retractionSpeed2;
     int retractionMinimalDistance;
     int minimalExtrusionBeforeRetraction;
     int retractionZHop;
@@ -217,9 +221,9 @@ public:
     IntPoint extruderOffset[MAX_EXTRUDERS];
     std::string startCode;
     std::string endCode;
-    std::string preSwitchExtruderCode;
-    std::string postSwitchExtruderCode;
-    
+    std::string preSwitchExtruderCode[2];
+    std::string postSwitchExtruderCode[2];
+
     //Time estimate settings
     int acceleration;
     int max_acceleration[4];

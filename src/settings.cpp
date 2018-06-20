@@ -22,7 +22,9 @@ ConfigSettings::ConfigSettings()
     SETTING(layerThickness, 100);
     SETTING(initialLayerThickness, 300);
     SETTING(filamentDiameter, 2890);
+    SETTING(filamentDiameter2, 2890);
     SETTING(filamentFlow, 100);
+    SETTING(filamentFlow2, 100);
     SETTING(layer0extrusionWidth, 600);
     SETTING(extrusionWidth, 400);
     SETTING(insetCount, 2);
@@ -56,8 +58,10 @@ ConfigSettings::ConfigSettings()
     SETTING(supportExtruder, -1);
 
     SETTING(retractionAmount, 4500);
+    SETTING(retractionAmount2, 4500);
     SETTING(retractionAmountPrime, 0);
     SETTING(retractionSpeed, 45);
+    SETTING(retractionSpeed2, 45);
     SETTING(retractionAmountExtruderSwitch, 14500);
     SETTING(retractionMinimalDistance, 1500);
     SETTING(minimalExtrusionBeforeRetraction, 100);
@@ -188,14 +192,24 @@ bool ConfigSettings::setSetting(const char* key, const char* value)
         this->endCode = value;
         return true;
     }
-    if (stringcasecompare(key, "preSwitchExtruderCode") == 0)
+    if (stringcasecompare(key, "preSwitchExtruderCode[0]") == 0)
     {
-        this->preSwitchExtruderCode = value;
+        this->preSwitchExtruderCode[0] = value;
         return true;
     }
-    if (stringcasecompare(key, "postSwitchExtruderCode") == 0)
+    if (stringcasecompare(key, "postSwitchExtruderCode[0]") == 0)
     {
-        this->postSwitchExtruderCode = value;
+        this->postSwitchExtruderCode[0] = value;
+        return true;
+    }
+    if (stringcasecompare(key, "preSwitchExtruderCode[1]") == 0)
+    {
+        this->preSwitchExtruderCode[1] = value;
+        return true;
+    }
+    if (stringcasecompare(key, "postSwitchExtruderCode[1]") == 0)
+    {
+        this->postSwitchExtruderCode[1] = value;
         return true;
     }
     return false;

@@ -107,7 +107,7 @@ private:
             gcode.setExtruderOffset(n, config.extruderOffset[n].p());
         gcode.setSwitchExtruderCode(config.preSwitchExtruderCode, config.postSwitchExtruderCode);
         gcode.setFlavor(config.gcodeFlavor);
-        gcode.setRetractionSettings(config.retractionAmount, config.retractionSpeed, config.retractionAmountExtruderSwitch, config.minimalExtrusionBeforeRetraction, config.retractionZHop, config.retractionAmountPrime);
+        gcode.setRetractionSettings(config.retractionAmount, config.retractionSpeed, config.retractionAmount2, config.retractionSpeed2, config.retractionAmountExtruderSwitch, config.minimalExtrusionBeforeRetraction, config.retractionZHop, config.retractionAmountPrime);
         gcode.applyAccelerationSettings(config);
     }
 
@@ -224,7 +224,7 @@ private:
     void processSliceData(SliceDataStorage& storage)
     {
         const unsigned int totalLayers = storage.volumes[0].layers.size();
-        
+
         //carveMultipleVolumes(storage.volumes);
         generateMultipleVolumesOverlap(storage.volumes, config.multiVolumeOverlap);
         //dumpLayerparts(storage, "c:/models/output.html");
@@ -581,7 +581,7 @@ private:
             }
             if (config.spiralizeMode)
                 inset0Config.spiralize = true;
-            
+
             gcodeLayer.addPolygonsByOptimizer(polygons, &inset0Config);
             return;
         }
@@ -615,7 +615,7 @@ private:
                 extrusionWidth = config.layer0extrusionWidth;
 
             // Add either infill or perimeter first depending on option
-            if (!config.perimeterBeforeInfill) 
+            if (!config.perimeterBeforeInfill)
             {
                 addInfillToGCode(part, gcodeLayer, layerNr, extrusionWidth, fillAngle);
                 addInsetToGCode(part, gcodeLayer, layerNr);
@@ -624,7 +624,7 @@ private:
                 addInsetToGCode(part, gcodeLayer, layerNr);
                 addInfillToGCode(part, gcodeLayer, layerNr, extrusionWidth, fillAngle);
             }
-            
+
             Polygons skinPolygons;
             for(Polygons outline : part->skinOutline.splitIntoParts())
             {

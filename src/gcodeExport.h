@@ -21,6 +21,7 @@ private:
     double extrusionAmount;
     double extrusionPerMM;
     double retractionAmount;
+    double retractionAmount2;
     double retractionAmountPrime;
     int retractionZHop;
     double extruderSwitchRetraction;
@@ -30,46 +31,46 @@ private:
     Point3 startPosition;
     Point extruderOffset[MAX_EXTRUDERS];
     char extruderCharacter[MAX_EXTRUDERS];
-    int currentSpeed, retractionSpeed;
+    int currentSpeed, retractionSpeed, retractionSpeed2;
     int zPos;
     bool isRetracted;
     int extruderNr;
     int currentFanSpeed;
     int flavor;
-    std::string preSwitchExtruderCode;
-    std::string postSwitchExtruderCode;
-    
+    std::string preSwitchExtruderCode[2];
+    std::string postSwitchExtruderCode[2];
+
     double totalFilament[MAX_EXTRUDERS];
     double totalPrintTime;
     TimeEstimateCalculator estimateCalculator;
 public:
-    
+
     GCodeExport();
-    
+
     ~GCodeExport();
-    
+
     void replaceTagInStart(const char* tag, const char* replaceValue);
-    
+
     void setExtruderOffset(int id, Point p);
-    void setSwitchExtruderCode(std::string preSwitchExtruderCode, std::string postSwitchExtruderCode);
-    
+    void setSwitchExtruderCode(std::string preSwitchExtruderCode[2], std::string postSwitchExtruderCode[2]);
+
     void setFlavor(int flavor);
     int getFlavor();
-    
+
     void setFilename(const char* filename);
-    
+
     bool isOpened();
-    
+
     void setExtrusion(int layerThickness, int filamentDiameter, int flow);
-    
-    void setRetractionSettings(int retractionAmount, int retractionSpeed, int extruderSwitchRetraction, int minimalExtrusionBeforeRetraction, int zHop, int retractionAmountPrime);
-    
+
+    void setRetractionSettings(int retractionAmount, int retractionSpeed, int retractionAmount2, int retractionSpeed2, int extruderSwitchRetraction, int minimalExtrusionBeforeRetraction, int zHop, int retractionAmountPrime);
+
     void applyAccelerationSettings(ConfigSettings& config);
-    
+
     void setZ(int z);
-    
+
     Point getPositionXY();
-    
+
     void resetStartPosition();
 
     Point getStartPositionXY();
@@ -77,30 +78,30 @@ public:
     int getPositionZ();
 
     int getExtruderNr();
-    
+
     double getTotalFilamentUsed(int e);
 
     double getTotalPrintTime();
     void updateTotalPrintTime();
-    
+
     void writeComment(const char* comment, ...);
 
     void writeLine(const char* line, ...);
-    
+
     void resetExtrusionValue();
-    
+
     void writeDelay(double timeAmount);
-    
+
     void writeMove(Point p, int speed, int lineWidth);
-    
+
     void writeRetraction(bool force=false);
-    
+
     void switchExtruder(int newExtruder);
-    
+
     void writeCode(const char* str);
-    
+
     void writeFanCommand(int speed);
-    
+
     void finalize(int maxObjectHeight, int moveSpeed, const char* endCode);
 
     int getFileSize();
@@ -115,10 +116,10 @@ public:
     int lineWidth;
     const char* name;
     bool spiralize;
-    
+
     GCodePathConfig() : speed(0), lineWidth(0), name(nullptr), spiralize(false) {}
     GCodePathConfig(int speed, int lineWidth, const char* name) : speed(speed), lineWidth(lineWidth), name(name), spiralize(false) {}
-    
+
     void setData(int speed, int lineWidth, const char* name)
     {
         this->speed = speed;
@@ -144,11 +145,11 @@ class GCodePlanner
 {
 private:
     GCodeExport& gcode;
-    
+
     Point lastPosition;
     vector<GCodePath> paths;
     Comb* comb;
-    
+
     GCodePathConfig travelConfig;
     int extrudeSpeedFactor;
     int travelSpeedFactor;
@@ -164,7 +165,7 @@ private:
 public:
     GCodePlanner(GCodeExport& gcode, int travelSpeed, int retractionMinimalDistance);
     ~GCodePlanner();
-    
+
     bool setExtruder(int extruder)
     {
         if (extruder == currentExtruder)
@@ -172,7 +173,7 @@ public:
         currentExtruder = extruder;
         return true;
     }
-    
+
     int getExtruder()
     {
         return currentExtruder;
@@ -187,17 +188,17 @@ public:
         else
             comb = nullptr;
     }
-    
+
     void setAlwaysRetract(bool alwaysRetract)
     {
         this->alwaysRetract = alwaysRetract;
     }
-    
+
     void forceRetract()
     {
         forceRetraction = true;
     }
-    
+
     void setExtrudeSpeedFactor(int speedFactor)
     {
         if (speedFactor < 1) speedFactor = 1;
@@ -216,19 +217,19 @@ public:
     {
         return this->travelSpeedFactor;
     }
-    
+
     void addTravel(Point p);
-    
+
     void addExtrusionMove(Point p, GCodePathConfig* config);
-    
+
     void moveInsideCombBoundary(int distance);
 
     void addPolygon(PolygonRef polygon, int startIdx, GCodePathConfig* config);
 
     void addPolygonsByOptimizer(Polygons& polygons, GCodePathConfig* config);
-    
+
     void forceMinimalLayerTime(double minTime, int minimalSpeed);
-    
+
     void writeGCode(bool liftHeadIfNeeded, int layerThickness);
 };
 

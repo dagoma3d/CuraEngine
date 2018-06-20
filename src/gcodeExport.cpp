@@ -16,18 +16,20 @@ GCodeExport::GCodeExport()
     extrusionAmount = 0;
     extrusionPerMM = 0;
     retractionAmount = 4.5;
+    retractionAmount2 = 4.5;
     minimalExtrusionBeforeRetraction = 0.0;
     extrusionAmountAtPreviousRetraction = -10000;
     extruderSwitchRetraction = 14.5;
     extruderNr = 0;
     currentFanSpeed = -1;
-    
+
     totalPrintTime = 0.0;
     for(unsigned int e=0; e<MAX_EXTRUDERS; e++)
         totalFilament[e] = 0.0;
-    
+
     currentSpeed = 0;
     retractionSpeed = 45;
+    retractionSpeed2 = 45;
     isRetracted = false;
     setFlavor(GCODE_FLAVOR_REPRAP);
     memset(extruderOffset, 0, sizeof(extruderOffset));
@@ -49,18 +51,18 @@ void GCodeExport::replaceTagInStart(const char* tag, const char* replaceValue)
     }
     fpos_t oldPos;
     fgetpos(f, &oldPos);
-    
+
     char buffer[1024];
     fseek(f, 0, SEEK_SET);
     fread(buffer, 1024, 1, f);
-    
+
     char* c = strstr(buffer, tag);
     memset(c, ' ', strlen(tag));
     if (c) memcpy(c, replaceValue, strlen(replaceValue));
-    
+
     fseek(f, 0, SEEK_SET);
     fwrite(buffer, 1024, 1, f);
-    
+
     fsetpos(f, &oldPos);
 }
 
@@ -69,10 +71,12 @@ void GCodeExport::setExtruderOffset(int id, Point p)
     extruderOffset[id] = p;
 }
 
-void GCodeExport::setSwitchExtruderCode(std::string preSwitchExtruderCode, std::string postSwitchExtruderCode)
+void GCodeExport::setSwitchExtruderCode(std::string preSwitchExtruderCode[2], std::string postSwitchExtruderCode[2])
 {
-    this->preSwitchExtruderCode = preSwitchExtruderCode;
-    this->postSwitchExtruderCode = postSwitchExtruderCode;
+    for(int i = 0; i < 2; i++) {
+        this->preSwitchExtruderCode[i] = preSwitchExtruderCode[i];
+        this->postSwitchExtruderCode[i] = postSwitchExtruderCode[i];
+    }
 }
 
 void GCodeExport::setFlavor(int flavor)
@@ -110,11 +114,13 @@ void GCodeExport::setExtrusion(int layerThickness, int filamentDiameter, int flo
         extrusionPerMM = INT2MM(layerThickness) / filamentArea * double(flow) / 100.0;
 }
 
-void GCodeExport::setRetractionSettings(int retractionAmount, int retractionSpeed, int extruderSwitchRetraction, int minimalExtrusionBeforeRetraction, int zHop, int retractionAmountPrime)
+void GCodeExport::setRetractionSettings(int retractionAmount, int retractionSpeed, int retractionAmount2, int retractionSpeed2, int extruderSwitchRetraction, int minimalExtrusionBeforeRetraction, int zHop, int retractionAmountPrime)
 {
     this->retractionAmount = INT2MM(retractionAmount);
+    this->retractionAmount2 = INT2MM(retractionAmount2);
     this->retractionAmountPrime = INT2MM(retractionAmountPrime);
     this->retractionSpeed = retractionSpeed;
+    this->retractionSpeed2 = retractionSpeed2;
     this->extruderSwitchRetraction = INT2MM(extruderSwitchRetraction);
     this->minimalExtrusionBeforeRetraction = INT2MM(minimalExtrusionBeforeRetraction);
     this->retractionZHop = zHop;
@@ -258,7 +264,7 @@ void GCodeExport::writeMove(Point p, int speed, int lineWidth)
         }
         fprintf(f, "G1 X%0.3f Y%0.3f Z%0.3f F%0.1f\r\n", INT2MM(p.X - extruderOffset[extruderNr].X), INT2MM(p.Y - extruderOffset[extruderNr].Y), INT2MM(zPos), fspeed);
     }else{
-        
+
         //Normal E handling.
         if (lineWidth != 0)
         {
@@ -299,7 +305,7 @@ void GCodeExport::writeMove(Point p, int speed, int lineWidth)
             fprintf(f, " %c%0.5f", extruderCharacter[extruderNr], extrusionAmount);
         fprintf(f, "\n");
     }
-    
+
     currentPosition = Point3(p.X, p.Y, zPos);
     startPosition = currentPosition;
     estimateCalculator.plan(TimeEstimateCalculator::Position(INT2MM(currentPosition.x), INT2MM(currentPosition.y), INT2MM(currentPosition.z), extrusionAmount), speed);
@@ -309,7 +315,7 @@ void GCodeExport::writeRetraction(bool force)
 {
     if (flavor == GCODE_FLAVOR_BFB)//BitsFromBytes does automatic retraction.
         return;
-    
+
     if (retractionAmount > 0 && !isRetracted && (extrusionAmountAtPreviousRetraction + minimalExtrusionBeforeRetraction < extrusionAmount || force))
     {
         if (flavor == GCODE_FLAVOR_ULTIGCODE || flavor == GCODE_FLAVOR_REPRAP_VOLUMATRIC)
@@ -338,13 +344,14 @@ void GCodeExport::switchExtruder(int newExtruder)
         isRetracted = true;
         return;
     }
-    
+
     resetExtrusionValue();
     if (flavor == GCODE_FLAVOR_ULTIGCODE || flavor == GCODE_FLAVOR_REPRAP_VOLUMATRIC)
     {
         fprintf(f, "G10 S1\n");
     }else{
-        fprintf(f, "G1 F%i %c%0.5f\n", retractionSpeed * 60, extruderCharacter[extruderNr], extrusionAmount - extruderSwitchRetraction);
+        if(extruderSwitchRetraction > 0)
+            fprintf(f, "G1 F%i %c%0.5f\n", retractionSpeed * 60, extruderCharacter[extruderNr], extrusionAmount - extruderSwitchRetraction);
         currentSpeed = retractionSpeed;
     }
     if (retractionZHop > 0)
@@ -353,12 +360,12 @@ void GCodeExport::switchExtruder(int newExtruder)
     if (flavor == GCODE_FLAVOR_MACH3)
         resetExtrusionValue();
     isRetracted = true;
-    writeCode(preSwitchExtruderCode.c_str());
+    writeCode(preSwitchExtruderCode[extruderNr].c_str());
     if (flavor == GCODE_FLAVOR_MAKERBOT)
         fprintf(f, "M135 T%i\n", extruderNr);
     else
-        fprintf(f, "T%i\n", extruderNr);
-    writeCode(postSwitchExtruderCode.c_str());
+        fprintf(f, "T%i\n\n", extruderNr);
+    writeCode(postSwitchExtruderCode[extruderNr].c_str());
 }
 
 void GCodeExport::writeCode(const char* str)
@@ -420,7 +427,7 @@ void GCodeExport::finalize(int maxObjectHeight, int moveSpeed, const char* endCo
     cura::log("Print time: %d\n", int(getTotalPrintTime()));
     cura::log("Filament: %d\n", int(getTotalFilamentUsed(0)));
     cura::log("Filament2: %d\n", int(getTotalFilamentUsed(1)));
-    
+
     if (getFlavor() == GCODE_FLAVOR_ULTIGCODE)
     {
         char numberString[16];
@@ -587,13 +594,13 @@ void GCodePlanner::forceMinimalLayerTime(double minTime, int minimalSpeed)
             if (speed < minimalSpeed)
                 factor = double(minimalSpeed) / double(path->config->speed);
         }
-        
+
         //Only slow down with the minimal time if that will be slower then a factor already set. First layer slowdown also sets the speed factor.
         if (factor * 100 < getExtrudeSpeedFactor())
             setExtrudeSpeedFactor(factor * 100);
         else
             factor = getExtrudeSpeedFactor() / 100.0;
-        
+
         if (minTime - (extrudeTime / factor) - travelTime > 0.1)
         {
             //TODO: Use up this extra time (circle around the print?)
@@ -627,12 +634,12 @@ void GCodePlanner::writeGCode(bool liftHeadIfNeeded, int layerThickness)
             lastConfig = path->config;
         }
         int speed = path->config->speed;
-        
+
         if (path->config->lineWidth != 0)// Only apply the extrudeSpeedFactor to extrusion moves
             speed = speed * extrudeSpeedFactor / 100;
         else
             speed = speed * travelSpeedFactor / 100;
-        
+
         if (path->points.size() == 1 && path->config != &travelConfig && shorterThen(gcode.getPositionXY() - path->points[0], path->config->lineWidth * 2))
         {
             //Check for lots of small moves and combine them into one large line
@@ -655,7 +662,7 @@ void GCodePlanner::writeGCode(bool liftHeadIfNeeded, int layerThickness)
                     int64_t newLen = vSize(gcode.getPositionXY() - newPoint);
                     if (newLen > 0)
                         gcode.writeMove(newPoint, speed, path->config->lineWidth * oldLen / newLen);
-                    
+
                     p0 = paths[x+1].points[0];
                 }
                 gcode.writeMove(paths[i-1].points[0], speed, path->config->lineWidth);
@@ -663,7 +670,7 @@ void GCodePlanner::writeGCode(bool liftHeadIfNeeded, int layerThickness)
                 continue;
             }
         }
-        
+
         bool spiralize = path->config->spiralize;
         if (spiralize)
         {
@@ -686,7 +693,7 @@ void GCodePlanner::writeGCode(bool liftHeadIfNeeded, int layerThickness)
                 totalLength += vSizeMM(p0 - p1);
                 p0 = p1;
             }
-            
+
             float length = 0.0;
             p0 = gcode.getPositionXY();
             for(unsigned int i=0; i<path->points.size(); i++)
@@ -704,7 +711,7 @@ void GCodePlanner::writeGCode(bool liftHeadIfNeeded, int layerThickness)
             }
         }
     }
-    
+
     gcode.updateTotalPrintTime();
     if (liftHeadIfNeeded && extraTime > 0.0)
     {
