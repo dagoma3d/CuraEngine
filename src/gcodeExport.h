@@ -61,7 +61,7 @@ public:
 
     bool isOpened();
 
-    void setExtrusion(int layerThickness, int filamentDiameter, int flow);
+    void setExtrusion(int layerThickness, int diameter, int flow);
 
     void setRetractionSettings(int retractionAmount, int retractionSpeed, int retractionAmount2, int retractionSpeed2, int extruderSwitchRetraction, int minimalExtrusionBeforeRetraction, int zHop, int retractionAmountPrime);
 

@@ -73,7 +73,8 @@ void GCodeExport::setExtruderOffset(int id, Point p)
 
 void GCodeExport::setSwitchExtruderCode(std::string preSwitchExtruderCode[2], std::string postSwitchExtruderCode[2])
 {
-    for(int i = 0; i < 2; i++) {
+    for(int i = 0; i < 2; i++)
+    {
         this->preSwitchExtruderCode[i] = preSwitchExtruderCode[i];
         this->postSwitchExtruderCode[i] = postSwitchExtruderCode[i];
     }
@@ -105,9 +106,9 @@ bool GCodeExport::isOpened()
     return f != nullptr;
 }
 
-void GCodeExport::setExtrusion(int layerThickness, int filamentDiameter, int flow)
+void GCodeExport::setExtrusion(int layerThickness, int diameter, int flow)
 {
-    double filamentArea = M_PI * (INT2MM(filamentDiameter) / 2.0) * (INT2MM(filamentDiameter) / 2.0);
+    double filamentArea = M_PI * (INT2MM(diameter) / 2.0) * (INT2MM(diameter) / 2.0);
     if (flavor == GCODE_FLAVOR_ULTIGCODE || flavor == GCODE_FLAVOR_REPRAP_VOLUMATRIC)//UltiGCode uses volume extrusion as E value, and thus does not need the filamentArea in the mix.
         extrusionPerMM = INT2MM(layerThickness);
     else
