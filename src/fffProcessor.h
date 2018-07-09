@@ -385,6 +385,7 @@ private:
                     gcodeLayer.setExtruder(config.supportExtruder);
                 gcode.setZ(config.raftBaseThickness);
                 gcode.setExtrusion(config.raftBaseThickness, config.filamentDiameter, config.filamentFlow);
+                gcode.setExtrusion2(config.raftBaseThickness, config.filamentDiameter2, config.filamentFlow2);
 
                 gcodeLayer.addPolygonsByOptimizer(storage.skirt, &raftBaseConfig);
                 gcodeLayer.addPolygonsByOptimizer(storage.raftOutline, &raftBaseConfig);
@@ -406,6 +407,7 @@ private:
                 GCodePlanner gcodeLayer(gcode, config.moveSpeed, config.retractionMinimalDistance);
                 gcode.setZ(config.raftBaseThickness + config.raftInterfaceThickness);
                 gcode.setExtrusion(config.raftInterfaceThickness, config.filamentDiameter, config.filamentFlow);
+                gcode.setExtrusion2(config.raftBaseThickness, config.filamentDiameter2, config.filamentFlow2);
 
                 Polygons raftLines;
                 generateLineInfill(storage.raftOutline, raftLines, config.raftInterfaceLinewidth, config.raftInterfaceLineSpacing, config.infillOverlap, config.raftSurfaceLayers > 0 ? 45 : 90);
@@ -421,6 +423,7 @@ private:
                 GCodePlanner gcodeLayer(gcode, config.moveSpeed, config.retractionMinimalDistance);
                 gcode.setZ(config.raftBaseThickness + config.raftInterfaceThickness + config.raftSurfaceThickness*raftSurfaceLayer);
                 gcode.setExtrusion(config.raftSurfaceThickness, config.filamentDiameter, config.filamentFlow);
+                gcode.setExtrusion2(config.raftSurfaceThickness, config.filamentDiameter2, config.filamentFlow2);
 
                 Polygons raftLines;
                 generateLineInfill(storage.raftOutline, raftLines, config.raftSurfaceLinewidth, config.raftSurfaceLineSpacing, config.infillOverlap, 90 * raftSurfaceLayer);
@@ -460,10 +463,13 @@ private:
             }
 
             gcode.writeComment("LAYER:%d", layerNr);
-            if (layerNr == 0)
+            if (layerNr == 0){
                 gcode.setExtrusion(config.initialLayerThickness, config.filamentDiameter, config.filamentFlow);
-            else
+                gcode.setExtrusion2(config.initialLayerThickness, config.filamentDiameter2, config.filamentFlow2);
+            }else{
                 gcode.setExtrusion(config.layerThickness, config.filamentDiameter, config.filamentFlow);
+                gcode.setExtrusion2(config.layerThickness, config.filamentDiameter2, config.filamentFlow2);
+            }
 
             GCodePlanner gcodeLayer(gcode, config.moveSpeed, config.retractionMinimalDistance);
             int32_t z = config.initialLayerThickness + layerNr * config.layerThickness;

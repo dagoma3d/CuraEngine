@@ -20,6 +20,7 @@ private:
     FILE* f;
     double extrusionAmount;
     double extrusionPerMM;
+    double extrusionPerMM2;
     double retractionAmount;
     double retractionAmount2;
     double retractionAmountPrime;
@@ -62,6 +63,8 @@ public:
     bool isOpened();
 
     void setExtrusion(int layerThickness, int diameter, int flow);
+
+    void setExtrusion2(int layerThickness, int diameter, int flow);
 
     void setRetractionSettings(int retractionAmount, int retractionSpeed, int retractionAmount2, int retractionSpeed2, int extruderSwitchRetraction, int minimalExtrusionBeforeRetraction, int zHop, int retractionAmountPrime);
 
