@@ -107,7 +107,7 @@ private:
             gcode.setExtruderOffset(n, config.extruderOffset[n].p());
         gcode.setSwitchExtruderCode(config.preSwitchExtruderCode, config.postSwitchExtruderCode);
         gcode.setFlavor(config.gcodeFlavor);
-        gcode.setRetractionSettings(config.retractionAmount, config.retractionSpeed, config.retractionAmount2, config.retractionSpeed2, config.retractionAmountExtruderSwitch, config.minimalExtrusionBeforeRetraction, config.retractionZHop, config.retractionAmountPrime);
+        gcode.setRetractionSettings(config.retractionAmount, config.retractionSpeed, config.retractionAmountExtruderSwitch, config.minimalExtrusionBeforeRetraction, config.retractionZHop, config.retractionAmountPrime);
         gcode.applyAccelerationSettings(config);
     }
 
@@ -352,7 +352,7 @@ private:
             if (gcode.getFlavor() == GCODE_FLAVOR_BFB)
             {
                 gcode.writeComment("enable auto-retraction");
-                gcode.writeLine("M227 S%d P%d", config.retractionAmount * 2560 / 1000, config.retractionAmount * 2560 / 1000);
+                gcode.writeLine("M227 S%d P%d", config.retractionAmount[gcode.getExtruderNr()] * 2560 / 1000, config.retractionAmount[gcode.getExtruderNr()] * 2560 / 1000);
             }
         }else{
             gcode.writeFanCommand(0);
@@ -385,7 +385,6 @@ private:
                     gcodeLayer.setExtruder(config.supportExtruder);
                 gcode.setZ(config.raftBaseThickness);
                 gcode.setExtrusion(config.raftBaseThickness, config.filamentDiameter, config.filamentFlow);
-                gcode.setExtrusion2(config.raftBaseThickness, config.filamentDiameter2, config.filamentFlow2);
 
                 gcodeLayer.addPolygonsByOptimizer(storage.skirt, &raftBaseConfig);
                 gcodeLayer.addPolygonsByOptimizer(storage.raftOutline, &raftBaseConfig);
@@ -407,7 +406,6 @@ private:
                 GCodePlanner gcodeLayer(gcode, config.moveSpeed, config.retractionMinimalDistance);
                 gcode.setZ(config.raftBaseThickness + config.raftInterfaceThickness);
                 gcode.setExtrusion(config.raftInterfaceThickness, config.filamentDiameter, config.filamentFlow);
-                gcode.setExtrusion2(config.raftBaseThickness, config.filamentDiameter2, config.filamentFlow2);
 
                 Polygons raftLines;
                 generateLineInfill(storage.raftOutline, raftLines, config.raftInterfaceLinewidth, config.raftInterfaceLineSpacing, config.infillOverlap, config.raftSurfaceLayers > 0 ? 45 : 90);
@@ -423,7 +421,6 @@ private:
                 GCodePlanner gcodeLayer(gcode, config.moveSpeed, config.retractionMinimalDistance);
                 gcode.setZ(config.raftBaseThickness + config.raftInterfaceThickness + config.raftSurfaceThickness*raftSurfaceLayer);
                 gcode.setExtrusion(config.raftSurfaceThickness, config.filamentDiameter, config.filamentFlow);
-                gcode.setExtrusion2(config.raftSurfaceThickness, config.filamentDiameter2, config.filamentFlow2);
 
                 Polygons raftLines;
                 generateLineInfill(storage.raftOutline, raftLines, config.raftSurfaceLinewidth, config.raftSurfaceLineSpacing, config.infillOverlap, 90 * raftSurfaceLayer);
@@ -465,10 +462,8 @@ private:
             gcode.writeComment("LAYER:%d", layerNr);
             if (layerNr == 0){
                 gcode.setExtrusion(config.initialLayerThickness, config.filamentDiameter, config.filamentFlow);
-                gcode.setExtrusion2(config.initialLayerThickness, config.filamentDiameter2, config.filamentFlow2);
             }else{
                 gcode.setExtrusion(config.layerThickness, config.filamentDiameter, config.filamentFlow);
-                gcode.setExtrusion2(config.layerThickness, config.filamentDiameter2, config.filamentFlow2);
             }
 
             GCodePlanner gcodeLayer(gcode, config.moveSpeed, config.retractionMinimalDistance);

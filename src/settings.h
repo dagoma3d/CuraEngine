@@ -88,6 +88,7 @@ enum GCode_Flavor
     GCODE_FLAVOR_REPRAP_VOLUMATRIC = 5,
 };
 
+#define NB_EXTRUDERS 2
 #define MAX_EXTRUDERS 16
 
 /**
@@ -129,10 +130,8 @@ public:
     int nozzleSize;
     int layerThickness;
     int initialLayerThickness;
-    int filamentDiameter;
-    int filamentFlow;
-    int filamentDiameter2;
-    int filamentFlow2;
+    int filamentDiameter[NB_EXTRUDERS];
+    int filamentFlow[NB_EXTRUDERS];
     int layer0extrusionWidth;
     int extrusionWidth;
     int insetCount;
@@ -143,12 +142,10 @@ public:
     int skirtMinLength;
 
     //Retraction settings
-    int retractionAmount;
-    int retractionAmount2;
+    int retractionAmount[NB_EXTRUDERS];
     int retractionAmountPrime;
     int retractionAmountExtruderSwitch;
-    int retractionSpeed;
-    int retractionSpeed2;
+    int retractionSpeed[NB_EXTRUDERS];
     int retractionMinimalDistance;
     int minimalExtrusionBeforeRetraction;
     int retractionZHop;
@@ -221,8 +218,8 @@ public:
     IntPoint extruderOffset[MAX_EXTRUDERS];
     std::string startCode;
     std::string endCode;
-    std::string preSwitchExtruderCode[2];
-    std::string postSwitchExtruderCode[2];
+    std::string preSwitchExtruderCode[NB_EXTRUDERS];
+    std::string postSwitchExtruderCode[NB_EXTRUDERS];
 
     //Time estimate settings
     int acceleration;

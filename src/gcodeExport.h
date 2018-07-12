@@ -19,10 +19,8 @@ class GCodeExport
 private:
     FILE* f;
     double extrusionAmount;
-    double extrusionPerMM;
-    double extrusionPerMM2;
-    double retractionAmount;
-    double retractionAmount2;
+    double extrusionPerMM[NB_EXTRUDERS];
+    double retractionAmount[NB_EXTRUDERS];
     double retractionAmountPrime;
     int retractionZHop;
     double extruderSwitchRetraction;
@@ -32,14 +30,15 @@ private:
     Point3 startPosition;
     Point extruderOffset[MAX_EXTRUDERS];
     char extruderCharacter[MAX_EXTRUDERS];
-    int currentSpeed, retractionSpeed, retractionSpeed2;
+    int retractionSpeed[NB_EXTRUDERS];
+    int currentSpeed;
     int zPos;
     bool isRetracted;
     int extruderNr;
     int currentFanSpeed;
     int flavor;
-    std::string preSwitchExtruderCode[2];
-    std::string postSwitchExtruderCode[2];
+    std::string preSwitchExtruderCode[NB_EXTRUDERS];
+    std::string postSwitchExtruderCode[NB_EXTRUDERS];
 
     double totalFilament[MAX_EXTRUDERS];
     double totalPrintTime;
@@ -53,7 +52,7 @@ public:
     void replaceTagInStart(const char* tag, const char* replaceValue);
 
     void setExtruderOffset(int id, Point p);
-    void setSwitchExtruderCode(std::string preSwitchExtruderCode[2], std::string postSwitchExtruderCode[2]);
+    void setSwitchExtruderCode(std::string preSwitchExtruderCode[NB_EXTRUDERS], std::string postSwitchExtruderCode[NB_EXTRUDERS]);
 
     void setFlavor(int flavor);
     int getFlavor();
@@ -62,11 +61,9 @@ public:
 
     bool isOpened();
 
-    void setExtrusion(int layerThickness, int diameter, int flow);
+    void setExtrusion(int layerThickness, int diameter[NB_EXTRUDERS], int flow[NB_EXTRUDERS]);
 
-    void setExtrusion2(int layerThickness, int diameter, int flow);
-
-    void setRetractionSettings(int retractionAmount, int retractionSpeed, int retractionAmount2, int retractionSpeed2, int extruderSwitchRetraction, int minimalExtrusionBeforeRetraction, int zHop, int retractionAmountPrime);
+    void setRetractionSettings(int retractionAmount[NB_EXTRUDERS], int retractionSpeed[NB_EXTRUDERS], int extruderSwitchRetraction, int minimalExtrusionBeforeRetraction, int zHop, int retractionAmountPrime);
 
     void applyAccelerationSettings(ConfigSettings& config);
 

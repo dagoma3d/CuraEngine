@@ -21,10 +21,10 @@ ConfigSettings::ConfigSettings()
     SETTING(nozzleSize, 400);
     SETTING(layerThickness, 100);
     SETTING(initialLayerThickness, 300);
-    SETTING(filamentDiameter, 2890);
-    SETTING(filamentDiameter2, 2890);
-    SETTING(filamentFlow, 100);
-    SETTING(filamentFlow2, 100);
+    SETTING(filamentDiameter[0], 2890);
+    SETTING(filamentDiameter[1], 2890);
+    SETTING(filamentFlow[0], 100);
+    SETTING(filamentFlow[1], 100);
     SETTING(layer0extrusionWidth, 600);
     SETTING(extrusionWidth, 400);
     SETTING(insetCount, 2);
@@ -57,11 +57,11 @@ ConfigSettings::ConfigSettings()
     SETTING(supportZDistance, 150);
     SETTING(supportExtruder, -1);
 
-    SETTING(retractionAmount, 4500);
-    SETTING(retractionAmount2, 4500);
+    SETTING(retractionAmount[0], 4500);
+    SETTING(retractionAmount[1], 4500);
     SETTING(retractionAmountPrime, 0);
-    SETTING(retractionSpeed, 45);
-    SETTING(retractionSpeed2, 45);
+    SETTING(retractionSpeed[0], 45);
+    SETTING(retractionSpeed[1], 45);
     SETTING(retractionAmountExtruderSwitch, 14500);
     SETTING(retractionMinimalDistance, 1500);
     SETTING(minimalExtrusionBeforeRetraction, 100);
