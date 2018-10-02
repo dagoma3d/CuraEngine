@@ -9,10 +9,12 @@ void generateSkirt(SliceDataStorage& storage, int distance, int extrusionWidth, 
     bool externalOnly = (distance > 0);
     for(int skirtNr=0; skirtNr<count;skirtNr++)
     {
+        int wipeTowerOffsetDistance = extrusionWidth * (skirtNr + 1);
         int offsetDistance = distance + extrusionWidth * skirtNr + extrusionWidth / 2;
-        
+
         SupportPolyGenerator supportGenerator(storage.support, initialLayerHeight);
-        Polygons skirtPolygons(storage.wipeTower.offset(offsetDistance));
+        Polygons skirtPolygons(storage.wipeTower.offset(wipeTowerOffsetDistance));
+
         for(unsigned int volumeIdx = 0; volumeIdx < storage.volumes.size(); volumeIdx++)
         {
             if (storage.volumes[volumeIdx].layers.size() < 1) continue;
@@ -31,7 +33,7 @@ void generateSkirt(SliceDataStorage& storage, int distance, int extrusionWidth, 
                 supportGenerator.polygons = supportGenerator.polygons.difference(layer->parts[i].outline);
             }
         }
-        
+
         //Contract and expand the suppory polygons so small sections are removed and the final polygon is smoothed a bit.
         supportGenerator.polygons = supportGenerator.polygons.offset(-extrusionWidth * 3);
         supportGenerator.polygons = supportGenerator.polygons.offset(extrusionWidth * 3);
@@ -46,11 +48,14 @@ void generateSkirt(SliceDataStorage& storage, int distance, int extrusionWidth, 
         }
 
         storage.skirt.add(skirtPolygons);
-        
+
         int lenght = storage.skirt.polygonLength();
         if (skirtNr + 1 >= count && lenght > 0 && lenght < minLength)
             count++;
     }
+
+    Polygons skirtPolygons(storage.wipeTower.offset(extrusionWidth * (count + 1)));
+    storage.skirt.add(skirtPolygons);
 }
 
 }//namespace cura
