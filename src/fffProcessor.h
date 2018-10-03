@@ -319,49 +319,23 @@ private:
 
         if (config.wipeTowerSize > 0)
         {
-            storage.wipePoint = Point(storage.modelMin.x - 3000 - config.wipeTowerSize / 2, storage.modelMax.y + 3000 + config.wipeTowerSize / 2);
+            double wipeTowerOffset = 4200.0;
+            int n = 64;
+            double m = static_cast<double>(n);
+            double wipeTowerHoleFactor = 2.0;
+            storage.wipePoint = Point(storage.modelMin.x - wipeTowerOffset - config.wipeTowerSize / 2, storage.modelMax.y + wipeTowerOffset + config.wipeTowerSize / 2);
             double towerRadius = config.wipeTowerSize / sqrt(2);
-            double cos8 = cos(M_PI / 8.0) * towerRadius;
-            double sin8 = sin(M_PI / 8.0) * towerRadius;
 
             PolygonRef p = storage.wipeTower.newPoly();
-            p.add(Point(storage.modelMin.x - 3000, storage.modelMax.y + 3000));
-            p.add(Point(storage.wipePoint.X + cos8, storage.wipePoint.Y - sin8));
-            p.add(Point(storage.wipePoint.X + towerRadius, storage.wipePoint.Y));
-            p.add(Point(storage.wipePoint.X + cos8, storage.wipePoint.Y + sin8));
-            p.add(Point(storage.modelMin.x - 3000, storage.modelMax.y + 3000 + config.wipeTowerSize));
-            p.add(Point(storage.wipePoint.X + sin8, storage.wipePoint.Y + cos8));
-            p.add(Point(storage.wipePoint.X, storage.wipePoint.Y + towerRadius));
-            p.add(Point(storage.wipePoint.X - sin8, storage.wipePoint.Y + cos8));
-            p.add(Point(storage.modelMin.x - 3000 - config.wipeTowerSize, storage.modelMax.y + 3000 + config.wipeTowerSize));
-            p.add(Point(storage.wipePoint.X - cos8, storage.wipePoint.Y + sin8));
-            p.add(Point(storage.wipePoint.X - towerRadius, storage.wipePoint.Y));
-            p.add(Point(storage.wipePoint.X - cos8, storage.wipePoint.Y - sin8));
-            p.add(Point(storage.modelMin.x - 3000 - config.wipeTowerSize, storage.modelMax.y + 3000));
-            p.add(Point(storage.wipePoint.X - sin8, storage.wipePoint.Y - cos8));
-            p.add(Point(storage.wipePoint.X, storage.wipePoint.Y - towerRadius));
-            p.add(Point(storage.wipePoint.X + sin8, storage.wipePoint.Y - cos8));
+            for(int i=0; i < n; i++)
+              p.add(Point(storage.wipePoint.X + cos(2 * M_PI * i / m) * towerRadius, storage.wipePoint.Y + sin(2 * M_PI * i / m) * towerRadius));
 
-            towerRadius = towerRadius / 2.0;
-            cos8 = cos8 / 2.0;
-            sin8 = sin8 / 2.0;
+            towerRadius = towerRadius / wipeTowerHoleFactor;
+
             PolygonRef pHole = storage.wipeTower.newPoly();
-            pHole.add(Point(storage.modelMin.x - 3000 - config.wipeTowerSize / 4, storage.modelMax.y + 3000 + config.wipeTowerSize / 4));
-            pHole.add(Point(storage.wipePoint.X + cos8, storage.wipePoint.Y - sin8));
-            pHole.add(Point(storage.wipePoint.X + towerRadius, storage.wipePoint.Y));
-            pHole.add(Point(storage.wipePoint.X + cos8, storage.wipePoint.Y + sin8));
-            pHole.add(Point(storage.modelMin.x - 3000 - config.wipeTowerSize / 4, storage.modelMax.y + 3000 + config.wipeTowerSize / 2 + config.wipeTowerSize / 4));
-            pHole.add(Point(storage.wipePoint.X + sin8, storage.wipePoint.Y + cos8));
-            pHole.add(Point(storage.wipePoint.X, storage.wipePoint.Y + towerRadius));
-            pHole.add(Point(storage.wipePoint.X - sin8, storage.wipePoint.Y + cos8));
-            pHole.add(Point(storage.modelMin.x - 3000 - config.wipeTowerSize / 2 - config.wipeTowerSize / 4, storage.modelMax.y + 3000 + config.wipeTowerSize / 2 + config.wipeTowerSize / 4));
-            pHole.add(Point(storage.wipePoint.X - cos8, storage.wipePoint.Y + sin8));
-            pHole.add(Point(storage.wipePoint.X - towerRadius, storage.wipePoint.Y));
-            pHole.add(Point(storage.wipePoint.X - cos8, storage.wipePoint.Y - sin8));
-            pHole.add(Point(storage.modelMin.x - 3000 - config.wipeTowerSize / 2 - config.wipeTowerSize / 4, storage.modelMax.y + 3000 + config.wipeTowerSize / 4));
-            pHole.add(Point(storage.wipePoint.X - sin8, storage.wipePoint.Y - cos8));
-            pHole.add(Point(storage.wipePoint.X, storage.wipePoint.Y - towerRadius));
-            pHole.add(Point(storage.wipePoint.X + sin8, storage.wipePoint.Y - cos8));
+            for(int i=0; i < n; i++)
+              pHole.add(Point(storage.wipePoint.X + cos(2 * M_PI * i / m) * towerRadius, storage.wipePoint.Y + sin(2 * M_PI * i / m) * towerRadius));
+
             pHole.reverse();
         }
 

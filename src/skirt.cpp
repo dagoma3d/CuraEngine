@@ -54,8 +54,12 @@ void generateSkirt(SliceDataStorage& storage, int distance, int extrusionWidth, 
             count++;
     }
 
-    Polygons skirtPolygons(storage.wipeTower.offset(extrusionWidth * (count + 1)));
-    storage.skirt.add(skirtPolygons);
+    // Add skirts for the wipe tower
+    int n = 4;
+    for(int i = 1; i <= n; i++) {
+      Polygons skirtPolygons(storage.wipeTower.offset(extrusionWidth * (count + i)));
+      storage.skirt.add(skirtPolygons);
+    }
 }
 
 }//namespace cura
