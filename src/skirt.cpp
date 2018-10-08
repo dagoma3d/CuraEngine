@@ -7,13 +7,17 @@ namespace cura {
 void generateSkirt(SliceDataStorage& storage, int distance, int extrusionWidth, int count, int minLength, int initialLayerHeight)
 {
     bool externalOnly = (distance > 0);
+
+    Polygons baseWipeTower(storage.wipeTower);
+    if(baseWipeTower.size() > 0) baseWipeTower.remove(baseWipeTower.size() - 1);
+
     for(int skirtNr=0; skirtNr<count;skirtNr++)
     {
         int wipeTowerOffsetDistance = extrusionWidth * (skirtNr + 1);
         int offsetDistance = distance + extrusionWidth * skirtNr + extrusionWidth / 2;
 
         SupportPolyGenerator supportGenerator(storage.support, initialLayerHeight);
-        Polygons skirtPolygons(storage.wipeTower.offset(wipeTowerOffsetDistance));
+        Polygons skirtPolygons(baseWipeTower.offset(wipeTowerOffsetDistance));
 
         for(unsigned int volumeIdx = 0; volumeIdx < storage.volumes.size(); volumeIdx++)
         {
@@ -57,7 +61,7 @@ void generateSkirt(SliceDataStorage& storage, int distance, int extrusionWidth, 
     // Add skirts for the wipe tower
     int n = 4;
     for(int i = 1; i <= n; i++) {
-      Polygons skirtPolygons(storage.wipeTower.offset(extrusionWidth * (count + i)));
+      Polygons skirtPolygons(baseWipeTower.offset(extrusionWidth * (count + i)));
       storage.skirt.add(skirtPolygons);
     }
 }
