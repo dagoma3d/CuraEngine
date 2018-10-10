@@ -9,7 +9,7 @@ void generateSkirt(SliceDataStorage& storage, int distance, int extrusionWidth, 
     bool externalOnly = (distance > 0);
 
     Polygons baseWipeTower(storage.wipeTower);
-    if(baseWipeTower.size() > 0) baseWipeTower.remove(baseWipeTower.size() - 1);
+    if(baseWipeTower.size() == 2) baseWipeTower.remove(baseWipeTower.size() - 1);
 
     for(int skirtNr=0; skirtNr<count;skirtNr++)
     {

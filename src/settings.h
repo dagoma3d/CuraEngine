@@ -153,6 +153,7 @@ public:
     int enableCombing;
     int enableOozeShield;
     int wipeTowerSize;
+    int wipeTowerShape;
     int multiVolumeOverlap;
 
     int initialSpeedupLayers;

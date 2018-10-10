@@ -319,24 +319,53 @@ private:
 
         if (config.wipeTowerSize > 0)
         {
-            double wipeTowerOffset = 4200.0;
-            int n = 64;
-            double m = static_cast<double>(n);
-            double wipeTowerHoleFactor = 2.0;
-            storage.wipePoint = Point(storage.modelMin.x - wipeTowerOffset - config.wipeTowerSize / 2, storage.modelMax.y + wipeTowerOffset + config.wipeTowerSize / 2);
-            double towerRadius = config.wipeTowerSize / sqrt(2);
+            if(config.wipeTowerShape == 1)
+            {
+              double wipeTowerOffset = 4200.0;
+              int n = 64;
+              double m = static_cast<double>(n);
+              double wipeTowerHoleFactor = 2.0;
+              storage.wipePoint = Point(storage.modelMin.x - wipeTowerOffset - config.wipeTowerSize / 2, storage.modelMax.y + wipeTowerOffset + config.wipeTowerSize / 2);
+              double towerRadius = config.wipeTowerSize / sqrt(2);
 
-            PolygonRef p = storage.wipeTower.newPoly();
-            for(int i=0; i < n; i++)
-              p.add(Point(storage.wipePoint.X + cos(2 * M_PI * i / m) * towerRadius, storage.wipePoint.Y + sin(2 * M_PI * i / m) * towerRadius));
+              PolygonRef p = storage.wipeTower.newPoly();
+              for(int i=0; i < n; i++)
+                p.add(Point(storage.wipePoint.X + cos(2 * M_PI * i / m) * towerRadius, storage.wipePoint.Y + sin(2 * M_PI * i / m) * towerRadius));
 
-            towerRadius = towerRadius / wipeTowerHoleFactor;
+              towerRadius = towerRadius / wipeTowerHoleFactor;
 
-            PolygonRef pHole = storage.wipeTower.newPoly();
-            for(int i=0; i < n; i++)
-              pHole.add(Point(storage.wipePoint.X + cos(2 * M_PI * i / m) * towerRadius, storage.wipePoint.Y + sin(2 * M_PI * i / m) * towerRadius));
+              PolygonRef pHole = storage.wipeTower.newPoly();
+              for(int i=0; i < n; i++)
+                pHole.add(Point(storage.wipePoint.X + cos(2 * M_PI * i / m) * towerRadius, storage.wipePoint.Y + sin(2 * M_PI * i / m) * towerRadius));
 
-            pHole.reverse();
+              pHole.reverse();
+            }
+            else if(config.wipeTowerShape == 0)
+            {
+              double wipeTowerOffset = 4200.0;
+              double wipeTowerWidth = 1000;
+              PolygonRef p = storage.wipeTower.newPoly();
+              p.add(Point(storage.modelMin.x - wipeTowerOffset, storage.modelMax.y + wipeTowerOffset));
+              p.add(Point(storage.modelMin.x - wipeTowerOffset, storage.modelMin.y - wipeTowerOffset));
+              p.add(Point(storage.modelMin.x - wipeTowerOffset - wipeTowerWidth, storage.modelMin.y - wipeTowerOffset));
+              p.add(Point(storage.modelMin.x - wipeTowerOffset - wipeTowerWidth, storage.modelMax.y + wipeTowerOffset + wipeTowerWidth));
+              p.add(Point(storage.modelMax.x + wipeTowerOffset + wipeTowerWidth, storage.modelMax.y + wipeTowerOffset + wipeTowerWidth));
+              p.add(Point(storage.modelMax.x + wipeTowerOffset + wipeTowerWidth, storage.modelMin.y - wipeTowerOffset));
+              p.add(Point(storage.modelMax.x + wipeTowerOffset, storage.modelMin.y - wipeTowerOffset));
+              p.add(Point(storage.modelMax.x + wipeTowerOffset, storage.modelMax.y + wipeTowerOffset));
+
+              storage.wipePoint = Point((storage.modelMax.x - storage.modelMin.x) / 2, (storage.modelMax.y - storage.modelMin.y) / 2);
+            }
+            else
+            {
+              PolygonRef p = storage.wipeTower.newPoly();
+              p.add(Point(storage.modelMin.x - 3000, storage.modelMax.y + 3000));
+              p.add(Point(storage.modelMin.x - 3000, storage.modelMax.y + 3000 + config.wipeTowerSize));
+              p.add(Point(storage.modelMin.x - 3000 - config.wipeTowerSize, storage.modelMax.y + 3000 + config.wipeTowerSize));
+              p.add(Point(storage.modelMin.x - 3000 - config.wipeTowerSize, storage.modelMax.y + 3000));
+
+              storage.wipePoint = Point(storage.modelMin.x - 3000 - config.wipeTowerSize / 2, storage.modelMax.y + 3000 + config.wipeTowerSize / 2);
+            }
         }
 
         if (config.raftBaseThickness > 0 && config.raftInterfaceThickness > 0)
