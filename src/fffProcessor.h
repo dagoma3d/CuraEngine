@@ -317,61 +317,72 @@ private:
         }
         cura::log("Generated up/down skin in %5.3fs\n", timeKeeper.restart());
 
-        if (config.wipeTowerSize > 0)
+        if (config.wipeTowerVolume > 0)
         {
+            double wipeTowerOffset = (std::max(config.wipeTowerSkirtLineCount, config.skirtLineCount) + config.skirtLineCount) * config.extrusionWidth + (config.skirtDistance + 2 * config.extrusionWidth);
+            double wipeTowerVolume = static_cast<double>(config.wipeTowerVolume);
+            double layerThickness = INT2MM(config.layerThickness);
             if(config.wipeTowerShape == 1)
             {
-              double wipeTowerOffset = 4200.0;
               int n = 64;
               double m = static_cast<double>(n);
               double wipeTowerHoleFactor = 2.0;
-              storage.wipePoint = Point(storage.modelMin.x - wipeTowerOffset - config.wipeTowerSize / 2, storage.modelMax.y + wipeTowerOffset + config.wipeTowerSize / 2);
-              double towerRadius = config.wipeTowerSize / sqrt(2);
+              double wipeTowerRadius = sqrt((wipeTowerHoleFactor * wipeTowerHoleFactor * wipeTowerVolume)/(M_PI * layerThickness * (wipeTowerHoleFactor * wipeTowerHoleFactor - 1))) * 1000.0;
+              storage.wipePoint = Point(storage.modelMin.x - wipeTowerOffset - wipeTowerRadius / 2, storage.modelMax.y + wipeTowerOffset + wipeTowerRadius / 2);
 
               PolygonRef p = storage.wipeTower.newPoly();
               for(int i=0; i < n; i++)
-                p.add(Point(storage.wipePoint.X + cos(2 * M_PI * i / m) * towerRadius, storage.wipePoint.Y + sin(2 * M_PI * i / m) * towerRadius));
+                p.add(Point(storage.wipePoint.X + cos(2 * M_PI * i / m) * wipeTowerRadius, storage.wipePoint.Y + sin(2 * M_PI * i / m) * wipeTowerRadius));
 
-              towerRadius = towerRadius / wipeTowerHoleFactor;
+              wipeTowerRadius = wipeTowerRadius / wipeTowerHoleFactor;
 
               PolygonRef pHole = storage.wipeTower.newPoly();
               for(int i=0; i < n; i++)
-                pHole.add(Point(storage.wipePoint.X + cos(2 * M_PI * i / m) * towerRadius, storage.wipePoint.Y + sin(2 * M_PI * i / m) * towerRadius));
+                pHole.add(Point(storage.wipePoint.X + cos(2 * M_PI * i / m) * wipeTowerRadius, storage.wipePoint.Y + sin(2 * M_PI * i / m) * wipeTowerRadius));
 
               pHole.reverse();
             }
             else if(config.wipeTowerShape == 0)
             {
-              double wipeTowerOffset = 4200.0;
-              double wipeTowerWidth = 1000;
+              double modelMaxY = storage.modelMax.y / 1000.0;
+              double modelMinY = storage.modelMin.y / 1000.0;
+              double modelMaxX = storage.modelMax.x / 1000.0;
+              double modelMinX = storage.modelMin.x / 1000.0;
+              double wipeTowerA = 2.0;
+              double wipeTowerB = 2 * (modelMaxY - modelMinY) + (modelMaxX - modelMinX) + 4 * wipeTowerOffset / 1000.0;
+              double wipeTowerC = -(wipeTowerVolume / layerThickness);
+              double wipeTowerDelta = wipeTowerB * wipeTowerB - 4 * wipeTowerA * wipeTowerC;
+              double wipeTowerWidth = 1000.0 * (-wipeTowerB + sqrt(wipeTowerDelta)) / (2 * wipeTowerA);
+              wipeTowerWidth = std::max(static_cast<double>(config.extrusionWidth), wipeTowerWidth);
               PolygonRef p = storage.wipeTower.newPoly();
-              p.add(Point(storage.modelMin.x - wipeTowerOffset, storage.modelMax.y + wipeTowerOffset));
-              p.add(Point(storage.modelMin.x - wipeTowerOffset, storage.modelMin.y - wipeTowerOffset));
-              p.add(Point(storage.modelMin.x - wipeTowerOffset - wipeTowerWidth, storage.modelMin.y - wipeTowerOffset));
-              p.add(Point(storage.modelMin.x - wipeTowerOffset - wipeTowerWidth, storage.modelMax.y + wipeTowerOffset + wipeTowerWidth));
+              p.add(Point(storage.modelMax.x + wipeTowerOffset, storage.modelMin.y));
+              p.add(Point(storage.modelMax.x + wipeTowerOffset + wipeTowerWidth, storage.modelMin.y));
               p.add(Point(storage.modelMax.x + wipeTowerOffset + wipeTowerWidth, storage.modelMax.y + wipeTowerOffset + wipeTowerWidth));
-              p.add(Point(storage.modelMax.x + wipeTowerOffset + wipeTowerWidth, storage.modelMin.y - wipeTowerOffset));
-              p.add(Point(storage.modelMax.x + wipeTowerOffset, storage.modelMin.y - wipeTowerOffset));
+              p.add(Point(storage.modelMin.x - wipeTowerOffset - wipeTowerWidth, storage.modelMax.y + wipeTowerOffset + wipeTowerWidth));
+              p.add(Point(storage.modelMin.x - wipeTowerOffset - wipeTowerWidth, storage.modelMin.y));
+              p.add(Point(storage.modelMin.x - wipeTowerOffset, storage.modelMin.y));
+              p.add(Point(storage.modelMin.x - wipeTowerOffset, storage.modelMax.y + wipeTowerOffset));
               p.add(Point(storage.modelMax.x + wipeTowerOffset, storage.modelMax.y + wipeTowerOffset));
 
               storage.wipePoint = Point((storage.modelMax.x - storage.modelMin.x) / 2, (storage.modelMax.y - storage.modelMin.y) / 2);
             }
             else
             {
+              double wipeTowerSize = sqrt(wipeTowerVolume / layerThickness) * 1000.0;
               PolygonRef p = storage.wipeTower.newPoly();
-              p.add(Point(storage.modelMin.x - 3000, storage.modelMax.y + 3000));
-              p.add(Point(storage.modelMin.x - 3000, storage.modelMax.y + 3000 + config.wipeTowerSize));
-              p.add(Point(storage.modelMin.x - 3000 - config.wipeTowerSize, storage.modelMax.y + 3000 + config.wipeTowerSize));
-              p.add(Point(storage.modelMin.x - 3000 - config.wipeTowerSize, storage.modelMax.y + 3000));
+              p.add(Point(storage.modelMin.x - wipeTowerOffset, storage.modelMax.y + wipeTowerOffset));
+              p.add(Point(storage.modelMin.x - wipeTowerOffset, storage.modelMax.y + wipeTowerOffset + wipeTowerSize));
+              p.add(Point(storage.modelMin.x - wipeTowerOffset - wipeTowerSize, storage.modelMax.y + wipeTowerOffset + wipeTowerSize));
+              p.add(Point(storage.modelMin.x - wipeTowerOffset - wipeTowerSize, storage.modelMax.y + wipeTowerOffset));
 
-              storage.wipePoint = Point(storage.modelMin.x - 3000 - config.wipeTowerSize / 2, storage.modelMax.y + 3000 + config.wipeTowerSize / 2);
+              storage.wipePoint = Point(storage.modelMin.x - wipeTowerOffset - wipeTowerSize / 2, storage.modelMax.y + wipeTowerOffset + wipeTowerSize / 2);
             }
         }
 
         if (config.raftBaseThickness > 0 && config.raftInterfaceThickness > 0)
-            generateSkirt(storage, config.raftMargin + config.raftBaseLinewidth, config.raftBaseLinewidth, config.skirtLineCount, config.skirtMinLength, config.raftBaseThickness);
+            generateSkirt(storage, config.raftMargin + config.raftBaseLinewidth, config.raftBaseLinewidth, config.skirtLineCount, config.skirtMinLength, config.raftBaseThickness, config.wipeTowerSkirtLineCount - config.skirtLineCount);
         else
-            generateSkirt(storage, config.skirtDistance, config.layer0extrusionWidth, config.skirtLineCount, config.skirtMinLength, config.initialLayerThickness);
+            generateSkirt(storage, config.skirtDistance, config.layer0extrusionWidth, config.skirtLineCount, config.skirtMinLength, config.initialLayerThickness, config.wipeTowerSkirtLineCount - config.skirtLineCount);
         generateRaft(storage, config.raftMargin);
 
         sendPolygonsToGui("skirt", 0, config.initialLayerThickness, storage.skirt);
@@ -835,7 +846,7 @@ private:
 
     void addWipeTower(SliceDataStorage& storage, GCodePlanner& gcodeLayer, int layerNr, int prevExtruder)
     {
-        if (config.wipeTowerSize < 1)
+        if (config.wipeTowerVolume < 1)
             return;
         //If we changed extruder, print the wipe/prime tower for this nozzle;
         gcodeLayer.addPolygonsByOptimizer(storage.wipeTower, &wipeTowerConfig);

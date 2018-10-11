@@ -4,7 +4,7 @@
 
 namespace cura {
 
-void generateSkirt(SliceDataStorage& storage, int distance, int extrusionWidth, int count, int minLength, int initialLayerHeight)
+void generateSkirt(SliceDataStorage& storage, int distance, int extrusionWidth, int count, int minLength, int initialLayerHeight, int additionalLines)
 {
     bool externalOnly = (distance > 0);
 
@@ -59,10 +59,12 @@ void generateSkirt(SliceDataStorage& storage, int distance, int extrusionWidth, 
     }
 
     // Add skirts for the wipe tower
-    int n = 4;
-    for(int i = 1; i <= n; i++) {
-      Polygons skirtPolygons(baseWipeTower.offset(extrusionWidth * (count + i)));
-      storage.skirt.add(skirtPolygons);
+    if(additionalLines > 0)
+    {
+      for(int i = 1; i <= additionalLines; i++) {
+        Polygons skirtPolygons(baseWipeTower.offset(extrusionWidth * (count + i)));
+        storage.skirt.add(skirtPolygons);
+      }
     }
 }
 

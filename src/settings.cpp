@@ -69,8 +69,9 @@ ConfigSettings::ConfigSettings()
 
     SETTING(enableCombing, COMBING_ALL);
     SETTING(enableOozeShield, 0);
-    SETTING(wipeTowerSize, 0);
+    SETTING(wipeTowerVolume, 0);
     SETTING(wipeTowerShape, -1);
+    SETTING(wipeTowerSkirtLineCount, 1);
     SETTING(multiVolumeOverlap, 0);
     SETTING2(objectPosition.X, posx, 102500);
     SETTING2(objectPosition.Y, posy, 102500);
