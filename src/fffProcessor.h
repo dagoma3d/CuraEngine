@@ -322,7 +322,20 @@ private:
             double wipeTowerOffset = (std::max(config.wipeTowerSkirtLineCount, config.skirtLineCount) + config.skirtLineCount) * config.extrusionWidth + (config.skirtDistance + 2 * config.extrusionWidth);
             double wipeTowerVolume = static_cast<double>(config.wipeTowerVolume);
             double layerThickness = INT2MM(config.layerThickness);
-            if(config.wipeTowerShape == 1)
+            if(config.wipeTowerShape == 2)
+            {
+              double modelMaxX = storage.modelMax.x / 1000.0;
+              double modelMinX = storage.modelMin.x / 1000.0;
+              double wipeTowerSize = sqrt(wipeTowerVolume / (layerThickness * (modelMaxX - modelMinX))) * 1000.0;
+              PolygonRef p = storage.wipeTower.newPoly();
+              p.add(Point(storage.modelMin.x, storage.modelMax.y + wipeTowerOffset));
+              p.add(Point(storage.modelMin.x, storage.modelMax.y + wipeTowerOffset + wipeTowerSize));
+              p.add(Point(storage.modelMax.x, storage.modelMax.y + wipeTowerOffset + wipeTowerSize));
+              p.add(Point(storage.modelMax.x, storage.modelMax.y + wipeTowerOffset));
+
+              storage.wipePoint = Point((storage.modelMin.x + storage.modelMax.x) / 2, storage.modelMax.y + wipeTowerOffset + wipeTowerSize / 2);
+            }
+            else if(config.wipeTowerShape == 1)
             {
               int n = 64;
               double m = static_cast<double>(n);
