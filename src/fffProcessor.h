@@ -326,7 +326,7 @@ private:
             {
               double modelMaxX = storage.modelMax.x / 1000.0;
               double modelMinX = storage.modelMin.x / 1000.0;
-              double wipeTowerSize = sqrt(wipeTowerVolume / (layerThickness * (modelMaxX - modelMinX))) * 1000.0;
+              double wipeTowerSize = (wipeTowerVolume / (layerThickness * (modelMaxX - modelMinX))) * 1000.0;
               PolygonRef p = storage.wipeTower.newPoly();
               p.add(Point(storage.modelMin.x, storage.modelMax.y + wipeTowerOffset));
               p.add(Point(storage.modelMin.x, storage.modelMax.y + wipeTowerOffset + wipeTowerSize));
