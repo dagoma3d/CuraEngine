@@ -327,6 +327,7 @@ private:
               double modelMaxX = storage.modelMax.x / 1000.0;
               double modelMinX = storage.modelMin.x / 1000.0;
               double wipeTowerSize = (wipeTowerVolume / (layerThickness * (modelMaxX - modelMinX))) * 1000.0;
+              wipeTowerSize = std::max(static_cast<double>(config.extrusionWidth) * 2.0, wipeTowerSize);
               PolygonRef p = storage.wipeTower.newPoly();
               p.add(Point(storage.modelMin.x, storage.modelMax.y + wipeTowerOffset));
               p.add(Point(storage.modelMin.x, storage.modelMax.y + wipeTowerOffset + wipeTowerSize));
@@ -366,7 +367,7 @@ private:
               double wipeTowerC = -(wipeTowerVolume / layerThickness);
               double wipeTowerDelta = wipeTowerB * wipeTowerB - 4 * wipeTowerA * wipeTowerC;
               double wipeTowerWidth = 1000.0 * (-wipeTowerB + sqrt(wipeTowerDelta)) / (2 * wipeTowerA);
-              wipeTowerWidth = std::max(static_cast<double>(config.extrusionWidth), wipeTowerWidth);
+              wipeTowerWidth = std::max(static_cast<double>(config.extrusionWidth) * 2.0, wipeTowerWidth);
               PolygonRef p = storage.wipeTower.newPoly();
               p.add(Point(storage.modelMax.x + wipeTowerOffset, storage.modelMin.y));
               p.add(Point(storage.modelMax.x + wipeTowerOffset + wipeTowerWidth, storage.modelMin.y));
