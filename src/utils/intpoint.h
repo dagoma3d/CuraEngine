@@ -99,8 +99,8 @@ INLINE Point operator/(const Point& p0, const int32_t i) { return Point(p0.X/i, 
 //Point& operator += (const Point& p) { x += p.x; y += p.y; return *this; }
 //Point& operator -= (const Point& p) { x -= p.x; y -= p.y; return *this; }
 
-INLINE bool operator==(const Point& p0, const Point& p1) { return p0.X==p1.X&&p0.Y==p1.Y; }
-INLINE bool operator!=(const Point& p0, const Point& p1) { return p0.X!=p1.X||p0.Y!=p1.Y; }
+//INLINE bool operator==(const Point& p0, const Point& p1) { return p0.X==p1.X&&p0.Y==p1.Y; }
+//INLINE bool operator!=(const Point& p0, const Point& p1) { return p0.X!=p1.X||p0.Y!=p1.Y; }
 
 INLINE int64_t vSize2(const Point& p0)
 {
