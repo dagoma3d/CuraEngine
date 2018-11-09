@@ -475,7 +475,7 @@ private:
                 gcode.writeComment("LAYER:-2");
                 gcode.writeComment("RAFT");
                 GCodePlanner gcodeLayer(gcode, config.moveSpeed, config.retractionMinimalDistance);
-                if (config.supportExtruder > 0)
+                if (config.supportExtruder > -1)
                     gcodeLayer.setExtruder(config.supportExtruder);
                 gcode.setZ(config.raftBaseThickness);
                 gcode.setExtrusion(config.raftBaseThickness, config.filamentDiameter, config.filamentFlow);
@@ -577,7 +577,7 @@ private:
             gcode.setZ(z);
             gcode.resetStartPosition();
 
-            bool printSupportFirst = (storage.support.generated && config.supportExtruder > 0 && config.supportExtruder == gcodeLayer.getExtruder());
+            bool printSupportFirst = (storage.support.generated && config.supportExtruder > -1 && config.supportExtruder == gcodeLayer.getExtruder());
             if (printSupportFirst)
                 addSupportToGCode(storage, gcodeLayer, layerNr);
 
@@ -894,7 +894,8 @@ private:
         Polygons offsettedWipeTower = storage.wipeTower.offset(-config.extrusionWidth);
         gcodeLayer.addPolygonsByOptimizer(offsettedWipeTower, &wipeTowerConfig);
         Polygons fillPolygons;
-        generateLineInfill(offsettedWipeTower, fillPolygons, config.extrusionWidth, config.extrusionWidth, config.infillOverlap, 45 + 90 * (layerNr % 2));
+        //generateLineInfill(offsettedWipeTower, fillPolygons, config.extrusionWidth, config.extrusionWidth, config.infillOverlap, 45 + 90 * (layerNr % 2));
+        generateConcentricInfill(offsettedWipeTower, fillPolygons, config.extrusionWidth);
         gcodeLayer.addPolygonsByOptimizer(fillPolygons, &wipeTowerConfig);
 
         //Make sure we wipe the old extruder on the wipe tower.
