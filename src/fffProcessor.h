@@ -893,9 +893,11 @@ private:
         gcodeLayer.addPolygonsByOptimizer(storage.wipeTower, &wipeTowerConfig);
         Polygons offsettedWipeTower = storage.wipeTower.offset(-config.extrusionWidth);
         gcodeLayer.addPolygonsByOptimizer(offsettedWipeTower, &wipeTowerConfig);
+        if (config.enableCombing)
+            gcodeLayer.setCombBoundary(&offsettedWipeTower);
         Polygons fillPolygons;
-        //generateLineInfill(offsettedWipeTower, fillPolygons, config.extrusionWidth, config.extrusionWidth, config.infillOverlap, 45 + 90 * (layerNr % 2));
-        generateConcentricInfill(offsettedWipeTower, fillPolygons, config.extrusionWidth);
+        generateLineInfill(offsettedWipeTower, fillPolygons, config.extrusionWidth, config.extrusionWidth, config.infillOverlap, 45 + 90 * (layerNr % 2));
+        //generateConcentricInfill(offsettedWipeTower, fillPolygons, config.extrusionWidth);
         gcodeLayer.addPolygonsByOptimizer(fillPolygons, &wipeTowerConfig);
 
         //Make sure we wipe the old extruder on the wipe tower.
