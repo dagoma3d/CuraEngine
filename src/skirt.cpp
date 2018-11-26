@@ -53,8 +53,8 @@ void generateSkirt(SliceDataStorage& storage, int distance, int extrusionWidth, 
 
         storage.skirt.add(skirtPolygons);
 
-        int lenght = storage.skirt.polygonLength();
-        if (skirtNr + 1 >= count && lenght > 0 && lenght < minLength)
+        int length = storage.skirt.polygonLength();
+        if (skirtNr + 1 >= count && length > 0 && length < minLength)
             count++;
     }
 
