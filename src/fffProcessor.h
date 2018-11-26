@@ -892,11 +892,11 @@ private:
         if (config.wipeTowerVolume < 1)
             return;
         //If we changed extruder, print the wipe/prime tower for this nozzle;
-        gcodeLayer.addPolygonsByOptimizer(storage.wipeTower, &wipeTowerConfig);
-        //gcodeLayer.addPolygons(storage.wipeTower, &wipeTowerConfig);
         Polygons offsettedWipeTower = storage.wipeTower.offset(-config.extrusionWidth);
         gcodeLayer.addPolygonsByOptimizer(offsettedWipeTower, &wipeTowerConfig);
+        gcodeLayer.addPolygonsByOptimizer(storage.wipeTower, &wipeTowerConfig);
         //gcodeLayer.addPolygons(offsettedWipeTower, &wipeTowerConfig);
+        //gcodeLayer.addPolygons(storage.wipeTower, &wipeTowerConfig);
         if (config.enableCombing)
             gcodeLayer.setCombBoundary(&offsettedWipeTower);
         Polygons wipeTowerInset = offsettedWipeTower.offset(-config.extrusionWidth);
