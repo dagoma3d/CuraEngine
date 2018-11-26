@@ -567,6 +567,14 @@ void GCodePlanner::addPolygonsByOptimizer(Polygons& polygons, GCodePathConfig* c
     }
 }
 
+void GCodePlanner::addPolygons(Polygons& polygons, GCodePathConfig* config)
+{
+    for(unsigned int i=0;i<polygons.size();i++)
+    {
+        addPolygon(polygons[i], 0, config);
+    }
+}
+
 void GCodePlanner::forceMinimalLayerTime(double minTime, int minimalSpeed)
 {
     Point p0 = gcode.getPositionXY();

@@ -228,6 +228,8 @@ public:
 
     void addPolygonsByOptimizer(Polygons& polygons, GCodePathConfig* config);
 
+    void addPolygons(Polygons& polygons, GCodePathConfig* config);
+
     void forceMinimalLayerTime(double minTime, int minimalSpeed);
 
     void writeGCode(bool liftHeadIfNeeded, int layerThickness);
