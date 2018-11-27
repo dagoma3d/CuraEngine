@@ -323,7 +323,85 @@ private:
             double wipeTowerVolume = static_cast<double>(config.wipeTowerVolume);
             double layerThickness = INT2MM(config.layerThickness);
             double minSizeFactor = 6.0;
-            if(config.wipeTowerShape == 3)
+            if(config.wipeTowerShape == 5)
+            {
+              int n = 64;
+              double m = static_cast<double>(n);
+              double modelMaxX = storage.modelMax.x / 1000.0;
+              double modelMinX = storage.modelMin.x / 1000.0;
+              double modelMaxY = storage.modelMax.x / 1000.0;
+              double modelMinY = storage.modelMin.x / 1000.0;
+              double w = (wipeTowerVolume / (layerThickness * ((modelMaxX - modelMinX) / 2 + (modelMaxY - modelMinY) / 2))) * 1000.0;
+              w = std::max(static_cast<double>(config.extrusionWidth) * minSizeFactor, w);
+              double r = w / 2;
+
+              Point c0 = Point(storage.modelMax.x + wipeTowerOffset + r, (storage.modelMin.y + storage.modelMax.y) / 2);
+              Point c1 = Point((storage.modelMin.x + storage.modelMax.x) / 2, storage.modelMax.y + wipeTowerOffset + r);
+              Point c2 = Point(storage.modelMax.x, storage.modelMax.y);
+
+              PolygonRef p = storage.wipeTower.newPoly();
+              //p.add(Point(storage.modelMax.x + wipeTowerOffset, storage.modelMax.y + wipeTowerOffset));
+              for(int i = n / 4; i >= 0; i--)
+                p.add(Point(c2.X + cos(2 * M_PI * i / m) * wipeTowerOffset, c2.Y + sin(2 * M_PI * i / m) * wipeTowerOffset));
+              for(int i = n / 2; i <= n; i++)
+                p.add(Point(c0.X + cos(2 * M_PI * i / m) * r, c0.Y + sin(2 * M_PI * i / m) * r));
+              //p.add(Point(storage.modelMax.x + wipeTowerOffset + w, storage.modelMax.y + wipeTowerOffset + w));
+              for(int i = 0; i <= n / 4; i++)
+                p.add(Point(c2.X + cos(2 * M_PI * i / m) * (w + wipeTowerOffset), c2.Y + sin(2 * M_PI * i / m) * (w + wipeTowerOffset)));
+              for(int i = n / 4; i <= 3 * n / 4; i++)
+                p.add(Point(c1.X + cos(2 * M_PI * i / m) * r, c1.Y + sin(2 * M_PI * i / m) * r));
+
+
+              storage.wipePoint = Point(storage.modelMax.x + wipeTowerOffset, storage.modelMax.y + wipeTowerOffset);
+            }
+            else if(config.wipeTowerShape == 4)
+            {
+              int n = 64;
+              double m = static_cast<double>(n);
+              double modelMaxY = storage.modelMax.y / 1000.0;
+              double modelMinY = storage.modelMin.y / 1000.0;
+              double rWidth = (wipeTowerVolume / (layerThickness * (modelMaxY - modelMinY))) * 1000.0;
+              rWidth = std::max(static_cast<double>(config.extrusionWidth) * minSizeFactor, rWidth);
+              double cRadius = rWidth * 0.75;
+              double cHoleRadius = rWidth / 3;
+              //double d = sqrt(cRadius * cRadius - rWidth * rWidth / 4);
+              Point cCenter0 = Point(storage.modelMax.x + wipeTowerOffset + rWidth / 2, storage.modelMin.y - cRadius);
+              Point cCenter1 = Point(storage.modelMax.x + wipeTowerOffset + rWidth / 2, storage.modelMax.y + cRadius);
+
+              PolygonRef pRect = storage.wipeTower.newPoly();
+              pRect.add(Point(storage.modelMax.x + wipeTowerOffset + rWidth, storage.modelMax.y));
+              for(int i=0; i <= n / 2; i++)
+                pRect.add(Point(cCenter1.X + cos(2 * M_PI * i / m) * cRadius, cCenter1.Y + sin(2 * M_PI * i / m) * cRadius));
+              pRect.add(Point(storage.modelMax.x + wipeTowerOffset, storage.modelMax.y));
+              pRect.add(Point(storage.modelMax.x + wipeTowerOffset, storage.modelMin.y));
+              for(int i=n / 2; i <= n; i++)
+                pRect.add(Point(cCenter0.X + cos(2 * M_PI * i / m) * cRadius, cCenter0.Y + sin(2 * M_PI * i / m) * cRadius));
+              pRect.add(Point(storage.modelMax.x + wipeTowerOffset + rWidth, storage.modelMin.y));
+
+              //pRect.reverse();
+/*
+              PolygonRef pCirc0 = storage.wipeTower.newPoly();
+              for(int i=0; i < n; i++)
+                pCirc0.add(Point(cCenter0.X + cos(2 * M_PI * i / m) * cRadius, cCenter0.Y + sin(2 * M_PI * i / m) * cRadius));
+*/
+              PolygonRef pCirc0Hole = storage.wipeTower.newPoly();
+              for(int i=0; i < n; i++)
+                pCirc0Hole.add(Point(cCenter0.X + cos(2 * M_PI * i / m) * cHoleRadius, cCenter0.Y + sin(2 * M_PI * i / m) * cHoleRadius));
+              pCirc0Hole.reverse();
+
+/*
+              PolygonRef pCirc1 = storage.wipeTower.newPoly();
+              for(int i=0; i < n; i++)
+                pCirc1.add(Point(cCenter1.X + cos(2 * M_PI * i / m) * cRadius, cCenter1.Y + sin(2 * M_PI * i / m) * cRadius));
+*/
+              PolygonRef pCirc1Hole = storage.wipeTower.newPoly();
+              for(int i=0; i < n; i++)
+                pCirc1Hole.add(Point(cCenter1.X + cos(2 * M_PI * i / m) * cHoleRadius, cCenter1.Y + sin(2 * M_PI * i / m) * cHoleRadius));
+              pCirc1Hole.reverse();
+
+              storage.wipePoint = Point(storage.modelMax.x + wipeTowerOffset + rWidth / 2, (storage.modelMin.y + storage.modelMax.y) / 2);
+            }
+            else if(config.wipeTowerShape == 3)
             {
               double wipeTowerLength = 1000.0;
               double modelMaxY = storage.modelMax.y / 1000.0;
@@ -349,7 +427,7 @@ private:
 
               storage.wipePoint = Point((storage.modelMax.x + storage.modelMin.x) / 2, storage.modelMax.y + wipeTowerOffset + wipeTowerWidth / 2);
             }
-			else if(config.wipeTowerShape == 2)
+            else if(config.wipeTowerShape == 2)
             {
               double modelMaxX = storage.modelMax.x / 1000.0;
               double modelMinX = storage.modelMin.x / 1000.0;
