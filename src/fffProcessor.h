@@ -636,6 +636,7 @@ private:
             }
 
             gcode.writeComment("LAYER:%d", layerNr);
+            gcode.writeLine("M117 Nb = %d / %d", layerNr + 1, totalLayers);
             if (layerNr == 0){
                 gcode.setExtrusion(config.initialLayerThickness, config.filamentDiameter, config.filamentFlow);
             }else{
