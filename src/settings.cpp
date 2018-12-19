@@ -105,6 +105,7 @@ ConfigSettings::ConfigSettings()
     SETTING(spiralizeMode, 0);
     SETTING(simpleMode, 0);
     SETTING(gcodeFlavor, GCODE_FLAVOR_REPRAP);
+    SETTING(minSegmentLength, 10);
 
     memset(extruderOffset, 0, sizeof(extruderOffset));
     SETTING(extruderOffset[0].X, 0); // No one says that extruder 0 can not have an offset!

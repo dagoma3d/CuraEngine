@@ -3,13 +3,13 @@
 
 namespace cura {
 
-void optimizePolygon(PolygonRef poly)
+void optimizePolygon(PolygonRef poly, int minSegmentLength)
 {
     Point p0 = poly[poly.size()-1];
     for(unsigned int i=0;i<poly.size();i++)
     {
         Point p1 = poly[i];
-        if (shorterThen(p0 - p1, MICRON2INT(10)))
+        if (shorterThen(p0 - p1, MICRON2INT(minSegmentLength)))
         {
             poly.remove(i);
             i --;
@@ -20,10 +20,10 @@ void optimizePolygon(PolygonRef poly)
                 p2 = poly[i+1];
             else
                 p2 = poly[0];
-            
+
             Point diff0 = normal(p1 - p0, 10000000);
             Point diff2 = normal(p1 - p2, 10000000);
-            
+
             int64_t d = dot(diff0, diff2);
             if (d < -99999999999999LL)
             {
@@ -38,11 +38,11 @@ void optimizePolygon(PolygonRef poly)
     }
 }
 
-void optimizePolygons(Polygons& polys)
+void optimizePolygons(Polygons& polys, int minSegmentLength)
 {
     for(unsigned int n=0;n<polys.size();n++)
     {
-        optimizePolygon(polys[n]);
+        optimizePolygon(polys[n], minSegmentLength);
         if (polys[n].size() < 3)
         {
             polys.remove(n);

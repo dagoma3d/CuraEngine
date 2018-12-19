@@ -9,18 +9,18 @@
 
 namespace cura {
 
-void SlicerLayer::makePolygons(OptimizedVolume* ov, bool keepNoneClosed, bool extensiveStitching)
+void SlicerLayer::makePolygons(OptimizedVolume* ov, bool keepNoneClosed, bool extensiveStitching, int minSegmentLength)
 {
     Polygons openPolygonList;
-    
+
     for(unsigned int startSegment=0; startSegment < segmentList.size(); startSegment++)
     {
         if (segmentList[startSegment].addedToPolygon)
             continue;
-        
+
         Polygon poly;
         poly.add(segmentList[startSegment].start);
-        
+
         unsigned int segmentIndex = startSegment;
         bool canClose;
         while(true)
@@ -67,7 +67,7 @@ void SlicerLayer::makePolygons(OptimizedVolume* ov, bool keepNoneClosed, bool ex
         for(unsigned int j=0;j<openPolygonList.size();j++)
         {
             if (openPolygonList[j].size() < 1) continue;
-            
+
             Point diff = openPolygonList[i][openPolygonList[i].size()-1] - openPolygonList[j][0];
             int64_t distSquared = vSize2(diff);
 
@@ -101,7 +101,7 @@ void SlicerLayer::makePolygons(OptimizedVolume* ov, bool keepNoneClosed, bool ex
             for(unsigned int j=0;j<openPolygonList.size();j++)
             {
                 if (openPolygonList[j].size() < 1) continue;
-                
+
                 Point diff = openPolygonList[i][openPolygonList[i].size()-1] - openPolygonList[j][0];
                 int64_t distSquared = vSize2(diff);
                 if (distSquared < bestScore)
@@ -126,10 +126,10 @@ void SlicerLayer::makePolygons(OptimizedVolume* ov, bool keepNoneClosed, bool ex
                 }
             }
         }
-        
+
         if (bestScore >= MM2INT(10.0) * MM2INT(10.0))
             break;
-        
+
         if (bestA == bestB)
         {
             polygonList.add(openPolygonList[bestA]);
@@ -161,7 +161,7 @@ void SlicerLayer::makePolygons(OptimizedVolume* ov, bool keepNoneClosed, bool ex
         // Then find the sortest path over this polygon that can be used to connect the open polygons,
         // And generate a path over this shortest bit to link up the 2 open polygons.
         // (If these 2 open polygons are the same polygon, then the final result is a closed polyon)
-        
+
         while(1)
         {
             unsigned int bestA = -1;
@@ -171,11 +171,11 @@ void SlicerLayer::makePolygons(OptimizedVolume* ov, bool keepNoneClosed, bool ex
             bestResult.polygonIdx = -1;
             bestResult.pointIdxA = -1;
             bestResult.pointIdxB = -1;
-            
+
             for(unsigned int i=0; i<openPolygonList.size(); i++)
             {
                 if (openPolygonList[i].size() < 1) continue;
-                
+
                 {
                     gapCloserResult res = findPolygonGapCloser(openPolygonList[i][0], openPolygonList[i][openPolygonList[i].size()-1]);
                     if (res.len > 0 && res.len < bestResult.len)
@@ -189,7 +189,7 @@ void SlicerLayer::makePolygons(OptimizedVolume* ov, bool keepNoneClosed, bool ex
                 for(unsigned int j=0; j<openPolygonList.size(); j++)
                 {
                     if (openPolygonList[j].size() < 1 || i == j) continue;
-                    
+
                     gapCloserResult res = findPolygonGapCloser(openPolygonList[i][0], openPolygonList[j][openPolygonList[j].size()-1]);
                     if (res.len > 0 && res.len < bestResult.len)
                     {
@@ -199,7 +199,7 @@ void SlicerLayer::makePolygons(OptimizedVolume* ov, bool keepNoneClosed, bool ex
                     }
                 }
             }
-            
+
             if (bestResult.len < POINT_MAX)
             {
                 if (bestA == bestB)
@@ -282,7 +282,7 @@ void SlicerLayer::makePolygons(OptimizedVolume* ov, bool keepNoneClosed, bool ex
     for(unsigned int i=0;i<polygonList.size();i++)
     {
         int length = 0;
-        
+
         for(unsigned int n=1; n<polygonList[i].size(); n++)
         {
             length += vSize(polygonList[i][n] - polygonList[i][n-1]);
@@ -297,24 +297,24 @@ void SlicerLayer::makePolygons(OptimizedVolume* ov, bool keepNoneClosed, bool ex
     }
 
     //Finally optimize all the polygons. Every point removed saves time in the long run.
-    optimizePolygons(polygonList);
+    optimizePolygons(polygonList, minSegmentLength);
 }
 
 
-Slicer::Slicer(OptimizedVolume* ov, int32_t initial, int32_t thickness, bool keepNoneClosed, bool extensiveStitching)
+Slicer::Slicer(OptimizedVolume* ov, int32_t initial, int32_t thickness, bool keepNoneClosed, bool extensiveStitching, int minSegmentLength)
 {
     modelSize = ov->model->modelSize;
     modelMin = ov->model->vMin;
-    
+
     int layerCount = (modelSize.z - initial) / thickness + 1;
     cura::log("Layer count: %i\n", layerCount);
     layers.resize(layerCount);
-    
+
     for(int32_t layerNr = 0; layerNr < layerCount; layerNr++)
     {
         layers[layerNr].z = initial + thickness * layerNr;
     }
-    
+
     for(unsigned int i=0; i<ov->faces.size(); i++)
     {
         Point3 p0 = ov->points[ov->faces[i].index[0]].p;
@@ -326,13 +326,13 @@ Slicer::Slicer(OptimizedVolume* ov, int32_t initial, int32_t thickness, bool kee
         if (p2.z < minZ) minZ = p2.z;
         if (p1.z > maxZ) maxZ = p1.z;
         if (p2.z > maxZ) maxZ = p2.z;
-        
+
         for(int32_t layerNr = (minZ - initial) / thickness; layerNr <= (maxZ - initial) / thickness; layerNr++)
         {
             int32_t z = layerNr * thickness + initial;
             if (z < minZ) continue;
             if (layerNr < 0) continue;
-            
+
             SlicerSegment s;
             if (p0.z < z && p1.z >= z && p2.z >= z)
                 s = project2D(p0, p2, p1, z);
@@ -360,10 +360,10 @@ Slicer::Slicer(OptimizedVolume* ov, int32_t initial, int32_t thickness, bool kee
             layers[layerNr].segmentList.push_back(s);
         }
     }
-    
+
     for(unsigned int layerNr=0; layerNr<layers.size(); layerNr++)
     {
-        layers[layerNr].makePolygons(ov, keepNoneClosed, extensiveStitching);
+        layers[layerNr].makePolygons(ov, keepNoneClosed, extensiveStitching, minSegmentLength);
     }
 }
 

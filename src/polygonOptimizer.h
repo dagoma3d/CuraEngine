@@ -6,9 +6,9 @@
 
 namespace cura {
 
-void optimizePolygon(PolygonRef poly);
+void optimizePolygon(PolygonRef poly, int minSegmentLength);
 
-void optimizePolygons(Polygons& polys);
+void optimizePolygons(Polygons& polys, int minSegmentLength);
 
 }//namespace cura
 

@@ -41,12 +41,12 @@ class SlicerLayer
 public:
     std::vector<SlicerSegment> segmentList;
     std::map<int, int> faceToSegmentIndex;
-    
+
     int z;
     Polygons polygonList;
     Polygons openPolygons;
-    
-    void makePolygons(OptimizedVolume* ov, bool keepNoneClosed, bool extensiveStitching);
+
+    void makePolygons(OptimizedVolume* ov, bool keepNoneClosed, bool extensiveStitching, int minSegmentLength);
 
 private:
     gapCloserResult findPolygonGapCloser(Point ip0, Point ip1)
@@ -63,7 +63,7 @@ private:
         ret.pointIdxA = c1.pointIdx;
         ret.pointIdxB = c2.pointIdx;
         ret.AtoB = true;
-        
+
         if (ret.pointIdxA == ret.pointIdxB)
         {
             //Connection points are on the same line segment.
@@ -89,7 +89,7 @@ private:
                 p0 = p1;
             }
             lenB += vSize(p0 - ip0);
-            
+
             if (lenA < lenB)
             {
                 ret.AtoB = true;
@@ -111,7 +111,7 @@ private:
             for(unsigned int i=0; i<polygonList[n].size(); i++)
             {
                 Point p1 = polygonList[n][i];
-                
+
                 //Q = A + Normal( B - A ) * ((( B - A ) dot ( P - A )) / VSize( A - B ));
                 Point pDiff = p1 - p0;
                 int64_t lineLength = vSize(pDiff);
@@ -143,9 +143,9 @@ class Slicer
 public:
     std::vector<SlicerLayer> layers;
     Point3 modelSize, modelMin;
-    
-    Slicer(OptimizedVolume* ov, int32_t initial, int32_t thickness, bool keepNoneClosed, bool extensiveStitching);
-    
+
+    Slicer(OptimizedVolume* ov, int32_t initial, int32_t thickness, bool keepNoneClosed, bool extensiveStitching, int minSegmentLength);
+
     SlicerSegment project2D(Point3& p0, Point3& p1, Point3& p2, int32_t z) const
     {
         SlicerSegment seg;
@@ -155,7 +155,7 @@ public:
         seg.end.Y = p0.y + int64_t(p2.y - p0.y) * int64_t(z - p0.z) / int64_t(p2.z - p0.z);
         return seg;
     }
-    
+
     void dumpSegmentsToHTML(const char* filename);
 };
 

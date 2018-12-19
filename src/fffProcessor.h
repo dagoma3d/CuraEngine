@@ -189,7 +189,7 @@ private:
         vector<Slicer*> slicerList;
         for(unsigned int volumeIdx=0; volumeIdx < optimizedModel->volumes.size(); volumeIdx++)
         {
-            Slicer* slicer = new Slicer(&optimizedModel->volumes[volumeIdx], config.initialLayerThickness - config.layerThickness / 2, config.layerThickness, config.fixHorrible & FIX_HORRIBLE_KEEP_NONE_CLOSED, config.fixHorrible & FIX_HORRIBLE_EXTENSIVE_STITCHING);
+            Slicer* slicer = new Slicer(&optimizedModel->volumes[volumeIdx], config.initialLayerThickness - config.layerThickness / 2, config.layerThickness, config.fixHorrible & FIX_HORRIBLE_KEEP_NONE_CLOSED, config.fixHorrible & FIX_HORRIBLE_EXTENSIVE_STITCHING, config.minSegmentLength);
             slicerList.push_back(slicer);
             for(unsigned int layerNr=0; layerNr<slicer->layers.size(); layerNr++)
             {
@@ -257,7 +257,7 @@ private:
                 int extrusionWidth = config.extrusionWidth;
                 if (layerNr == 0)
                     extrusionWidth = config.layer0extrusionWidth;
-                generateInsets(layer, extrusionWidth, insetCount);
+                generateInsets(layer, extrusionWidth, insetCount, config.minSegmentLength);
 
                 for(unsigned int partNr=0; partNr<layer->parts.size(); partNr++)
                 {

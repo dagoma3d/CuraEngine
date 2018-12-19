@@ -216,6 +216,7 @@ public:
     int spiralizeMode;
     int simpleMode;
     int gcodeFlavor;
+    int minSegmentLength;
 
     IntPoint extruderOffset[MAX_EXTRUDERS];
     std::string startCode;
