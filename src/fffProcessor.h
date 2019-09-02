@@ -9,7 +9,8 @@
 #define GUI_CMD_SEND_POLYGONS 0x02
 #define GUI_CMD_FINISH_OBJECT 0x03
 
-namespace cura {
+namespace cura
+{
 
 //FusedFilamentFabrication processor.
 class fffProcessor
@@ -18,7 +19,7 @@ private:
     int maxObjectHeight;
     int fileNr;
     GCodeExport gcode;
-    ConfigSettings& config;
+    ConfigSettings &config;
     TimeKeeper timeKeeper;
     ClientSocket guiSocket;
 
@@ -29,9 +30,10 @@ private:
     GCodePathConfig skinConfig;
     GCodePathConfig supportConfig;
     GCodePathConfig wipeTowerConfig;
+
 public:
-    fffProcessor(ConfigSettings& config)
-    : config(config)
+    fffProcessor(ConfigSettings &config)
+        : config(config)
     {
         fileNr = 1;
         maxObjectHeight = 0;
@@ -42,7 +44,7 @@ public:
         guiSocket.connectTo("127.0.0.1", portNr);
     }
 
-    void sendPolygonsToGui(const char* name, int layerNr, int32_t z, Polygons& polygons)
+    void sendPolygonsToGui(const char *name, int layerNr, int32_t z, Polygons &polygons)
     {
         guiSocket.sendNr(GUI_CMD_SEND_POLYGONS);
         guiSocket.sendNr(polygons.size());
@@ -50,7 +52,7 @@ public:
         guiSocket.sendNr(z);
         guiSocket.sendNr(strlen(name));
         guiSocket.sendAll(name, strlen(name));
-        for(unsigned int n=0; n<polygons.size(); n++)
+        for (unsigned int n = 0; n < polygons.size(); n++)
         {
             PolygonRef polygon = polygons[n];
             guiSocket.sendNr(polygon.size());
@@ -58,7 +60,7 @@ public:
         }
     }
 
-    bool setTargetFile(const char* filename)
+    bool setTargetFile(const char *filename)
     {
         gcode.setFilename(filename);
         if (gcode.isOpened())
@@ -80,7 +82,7 @@ public:
         processSliceData(storage);
         writeGCode(storage);
 
-        cura::logProgress("process", 1, 1);//Report the GUI that a file has been fully processed.
+        cura::logProgress("process", 1, 1); //Report the GUI that a file has been fully processed.
         cura::log("Total time elapsed %5.2fs.\n", timeKeeperTotal.restart());
         guiSocket.sendNr(GUI_CMD_FINISH_OBJECT);
 
@@ -105,7 +107,7 @@ private:
         supportConfig.setData(config.printSpeed, config.extrusionWidth, "SUPPORT");
         wipeTowerConfig.setData(config.printSpeed, config.extrusionWidth, "WIPE-TOWER");
 
-        for(unsigned int n=1; n<MAX_EXTRUDERS;n++)
+        for (unsigned int n = 1; n < MAX_EXTRUDERS; n++)
             gcode.setExtruderOffset(n, config.extruderOffset[n].p());
         gcode.setSwitchExtruderCode(config.preSwitchExtruderCode, config.postSwitchExtruderCode);
         gcode.setFlavor(config.gcodeFlavor);
@@ -113,25 +115,25 @@ private:
         gcode.applyAccelerationSettings(config);
     }
 
-    bool prepareModel(SliceDataStorage& storage, const std::vector<std::string> &files)
+    bool prepareModel(SliceDataStorage &storage, const std::vector<std::string> &files)
     {
         timeKeeper.restart();
-        SimpleModel* model = nullptr;
+        SimpleModel *model = nullptr;
         if (files.size() == 1 && files[0][0] == '$')
         {
             const char *input_filename = files[0].c_str();
             model = new SimpleModel();
-            for(unsigned int n=0; input_filename[n]; n++)
+            for (unsigned int n = 0; input_filename[n]; n++)
             {
                 model->volumes.push_back(SimpleVolume());
-                SimpleVolume* volume = &model->volumes[model->volumes.size()-1];
+                SimpleVolume *volume = &model->volumes[model->volumes.size() - 1];
                 guiSocket.sendNr(GUI_CMD_REQUEST_MESH);
 
                 int32_t vertexCount = guiSocket.recvNr();
                 int pNr = 0;
                 cura::log("Reading mesh from socket with %i vertexes\n", vertexCount);
                 Point3 v[3];
-                while(vertexCount)
+                while (vertexCount)
                 {
                     float f[3];
                     guiSocket.recvAll(f, 3 * sizeof(float));
@@ -145,15 +147,20 @@ private:
                     vertexCount--;
                 }
             }
-        }else{
+        }
+        else
+        {
             model = new SimpleModel();
-            for(unsigned int i=0;i < files.size(); i++) {
-                if(files[i] == "-")
+            for (unsigned int i = 0; i < files.size(); i++)
+            {
+                if (files[i] == "-")
                     model->volumes.push_back(SimpleVolume());
-                else {
+                else
+                {
                     cura::log("Loading %s from disk...\n", files[i].c_str());
-                    SimpleModel *test = loadModelFromFile(model,files[i].c_str(), config.matrix);
-                    if(test == nullptr) { // error while reading occurred
+                    SimpleModel *test = loadModelFromFile(model, files[i].c_str(), config.matrix);
+                    if (test == nullptr)
+                    { // error while reading occurred
                         cura::logError("Failed to load model: %s\n", files[i].c_str());
                         return false;
                     }
@@ -162,8 +169,8 @@ private:
         }
         cura::log("Loaded from disk in %5.3fs\n", timeKeeper.restart());
         cura::log("Analyzing and optimizing model...\n");
-        OptimizedModel* optimizedModel = new OptimizedModel(model, Point3(config.objectPosition.X, config.objectPosition.Y, -config.objectSink));
-        for(unsigned int v = 0; v < model->volumes.size(); v++)
+        OptimizedModel *optimizedModel = new OptimizedModel(model, Point3(config.objectPosition.X, config.objectPosition.Y, -config.objectSink));
+        for (unsigned int v = 0; v < model->volumes.size(); v++)
         {
             cura::log("  Face counts: %i -> %i %0.1f%%\n", (int)model->volumes[v].faces.size(), (int)optimizedModel->volumes[v].faces.size(), float(optimizedModel->volumes[v].faces.size()) / float(model->volumes[v].faces.size()) * 100);
             cura::log("  Vertex counts: %i -> %i %0.1f%%\n", (int)model->volumes[v].faces.size() * 3, (int)optimizedModel->volumes[v].points.size(), float(optimizedModel->volumes[v].points.size()) / float(model->volumes[v].faces.size() * 3) * 100);
@@ -175,7 +182,7 @@ private:
             cura::log("  Matrix: %f %f %f\n", config.matrix.m[0][0], config.matrix.m[1][0], config.matrix.m[2][0]);
             cura::log("  Matrix: %f %f %f\n", config.matrix.m[0][1], config.matrix.m[1][1], config.matrix.m[2][1]);
             cura::log("  Matrix: %f %f %f\n", config.matrix.m[0][2], config.matrix.m[1][2], config.matrix.m[2][2]);
-            if (INT2MM(optimizedModel->modelSize.x) > 10000.0 || INT2MM(optimizedModel->modelSize.y)  > 10000.0 || INT2MM(optimizedModel->modelSize.z) > 10000.0)
+            if (INT2MM(optimizedModel->modelSize.x) > 10000.0 || INT2MM(optimizedModel->modelSize.y) > 10000.0 || INT2MM(optimizedModel->modelSize.z) > 10000.0)
             {
                 cura::logError("Object is way to big, CuraEngine bug?");
                 exit(1);
@@ -186,12 +193,12 @@ private:
         //om->saveDebugSTL("c:\\models\\output.stl");
 
         cura::log("Slicing model...\n");
-        vector<Slicer*> slicerList;
-        for(unsigned int volumeIdx=0; volumeIdx < optimizedModel->volumes.size(); volumeIdx++)
+        vector<Slicer *> slicerList;
+        for (unsigned int volumeIdx = 0; volumeIdx < optimizedModel->volumes.size(); volumeIdx++)
         {
-            Slicer* slicer = new Slicer(&optimizedModel->volumes[volumeIdx], config.initialLayerThickness - config.layerThickness / 2, config.layerThickness, config.fixHorrible & FIX_HORRIBLE_KEEP_NONE_CLOSED, config.fixHorrible & FIX_HORRIBLE_EXTENSIVE_STITCHING, config.minSegmentLength);
+            Slicer *slicer = new Slicer(&optimizedModel->volumes[volumeIdx], config.initialLayerThickness - config.layerThickness / 2, config.layerThickness, config.fixHorrible & FIX_HORRIBLE_KEEP_NONE_CLOSED, config.fixHorrible & FIX_HORRIBLE_EXTENSIVE_STITCHING, config.minSegmentLength);
             slicerList.push_back(slicer);
-            for(unsigned int layerNr=0; layerNr<slicer->layers.size(); layerNr++)
+            for (unsigned int layerNr = 0; layerNr < slicer->layers.size(); layerNr++)
             {
                 //Reporting the outline here slows down the engine quite a bit, so only do so when debugging.
                 //sendPolygonsToGui("outline", layerNr, slicer->layers[layerNr].z, slicer->layers[layerNr].polygonList);
@@ -209,21 +216,21 @@ private:
         delete optimizedModel;
 
         cura::log("Generating layer parts...\n");
-        for(unsigned int volumeIdx=0; volumeIdx < slicerList.size(); volumeIdx++)
+        for (unsigned int volumeIdx = 0; volumeIdx < slicerList.size(); volumeIdx++)
         {
             storage.volumes.push_back(SliceVolumeStorage());
             createLayerParts(storage.volumes[volumeIdx], slicerList[volumeIdx], config.fixHorrible & (FIX_HORRIBLE_UNION_ALL_TYPE_A | FIX_HORRIBLE_UNION_ALL_TYPE_B | FIX_HORRIBLE_UNION_ALL_TYPE_C));
             delete slicerList[volumeIdx];
 
             //Add the raft offset to each layer.
-            for(unsigned int layerNr=0; layerNr<storage.volumes[volumeIdx].layers.size(); layerNr++)
+            for (unsigned int layerNr = 0; layerNr < storage.volumes[volumeIdx].layers.size(); layerNr++)
                 storage.volumes[volumeIdx].layers[layerNr].printZ += config.raftBaseThickness + config.raftInterfaceThickness;
         }
         cura::log("Generated layer parts in %5.3fs\n", timeKeeper.restart());
         return true;
     }
 
-    void processSliceData(SliceDataStorage& storage)
+    void processSliceData(SliceDataStorage &storage)
     {
         const unsigned int totalLayers = storage.volumes[0].layers.size();
 
@@ -232,12 +239,12 @@ private:
         //dumpLayerparts(storage, "c:/models/output.html");
         if (config.simpleMode)
         {
-            for(unsigned int layerNr=0; layerNr<totalLayers; layerNr++)
+            for (unsigned int layerNr = 0; layerNr < totalLayers; layerNr++)
             {
-                for(unsigned int volumeIdx=0; volumeIdx<storage.volumes.size(); volumeIdx++)
+                for (unsigned int volumeIdx = 0; volumeIdx < storage.volumes.size(); volumeIdx++)
                 {
-                    SliceLayer* layer = &storage.volumes[volumeIdx].layers[layerNr];
-                    for(unsigned int partNr=0; partNr<layer->parts.size(); partNr++)
+                    SliceLayer *layer = &storage.volumes[volumeIdx].layers[layerNr];
+                    for (unsigned int partNr = 0; partNr < layer->parts.size(); partNr++)
                     {
                         sendPolygonsToGui("inset0", layerNr, layer->printZ, layer->parts[partNr].outline);
                     }
@@ -246,39 +253,39 @@ private:
             return;
         }
 
-        for(unsigned int layerNr=0; layerNr<totalLayers; layerNr++)
+        for (unsigned int layerNr = 0; layerNr < totalLayers; layerNr++)
         {
-            for(unsigned int volumeIdx=0; volumeIdx<storage.volumes.size(); volumeIdx++)
+            for (unsigned int volumeIdx = 0; volumeIdx < storage.volumes.size(); volumeIdx++)
             {
                 int insetCount = config.insetCount;
-                if (config.spiralizeMode && static_cast<int>(layerNr) < config.downSkinCount && layerNr % 2 == 1)//Add extra insets every 2 layers when spiralizing, this makes bottoms of cups watertight.
+                if (config.spiralizeMode && static_cast<int>(layerNr) < config.downSkinCount && layerNr % 2 == 1) //Add extra insets every 2 layers when spiralizing, this makes bottoms of cups watertight.
                     insetCount += 5;
-                SliceLayer* layer = &storage.volumes[volumeIdx].layers[layerNr];
+                SliceLayer *layer = &storage.volumes[volumeIdx].layers[layerNr];
                 int extrusionWidth = config.extrusionWidth;
                 if (layerNr == 0)
                     extrusionWidth = config.layer0extrusionWidth;
                 generateInsets(layer, extrusionWidth, insetCount, config.minSegmentLength);
 
-                for(unsigned int partNr=0; partNr<layer->parts.size(); partNr++)
+                for (unsigned int partNr = 0; partNr < layer->parts.size(); partNr++)
                 {
                     if (layer->parts[partNr].insets.size() > 0)
                     {
                         sendPolygonsToGui("inset0", layerNr, layer->printZ, layer->parts[partNr].insets[0]);
-                        for(unsigned int inset=1; inset<layer->parts[partNr].insets.size(); inset++)
+                        for (unsigned int inset = 1; inset < layer->parts[partNr].insets.size(); inset++)
                             sendPolygonsToGui("insetx", layerNr, layer->printZ, layer->parts[partNr].insets[inset]);
                     }
                 }
             }
-            cura::logProgress("inset",layerNr+1,totalLayers);
+            cura::logProgress("inset", layerNr + 1, totalLayers);
         }
         if (config.enableOozeShield)
         {
-            for(unsigned int layerNr=0; layerNr<totalLayers; layerNr++)
+            for (unsigned int layerNr = 0; layerNr < totalLayers; layerNr++)
             {
                 Polygons oozeShield;
-                for(unsigned int volumeIdx=0; volumeIdx<storage.volumes.size(); volumeIdx++)
+                for (unsigned int volumeIdx = 0; volumeIdx < storage.volumes.size(); volumeIdx++)
                 {
-                    for(unsigned int partNr=0; partNr<storage.volumes[volumeIdx].layers[layerNr].parts.size(); partNr++)
+                    for (unsigned int partNr = 0; partNr < storage.volumes[volumeIdx].layers[layerNr].parts.size(); partNr++)
                     {
                         oozeShield = oozeShield.unionPolygons(storage.volumes[volumeIdx].layers[layerNr].parts[partNr].outline.offset(MM2INT(2.0)));
                     }
@@ -286,21 +293,21 @@ private:
                 storage.oozeShield.push_back(oozeShield);
             }
 
-            for(unsigned int layerNr=0; layerNr<totalLayers; layerNr++)
+            for (unsigned int layerNr = 0; layerNr < totalLayers; layerNr++)
                 storage.oozeShield[layerNr] = storage.oozeShield[layerNr].offset(-MM2INT(1.0)).offset(MM2INT(1.0));
-            int offsetAngle = tan(60.0*M_PI/180) * config.layerThickness;//Allow for a 60deg angle in the oozeShield.
-            for(unsigned int layerNr=1; layerNr<totalLayers; layerNr++)
-                storage.oozeShield[layerNr] = storage.oozeShield[layerNr].unionPolygons(storage.oozeShield[layerNr-1].offset(-offsetAngle));
-            for(unsigned int layerNr=totalLayers-1; layerNr>0; layerNr--)
-                storage.oozeShield[layerNr-1] = storage.oozeShield[layerNr-1].unionPolygons(storage.oozeShield[layerNr].offset(-offsetAngle));
+            int offsetAngle = tan(60.0 * M_PI / 180) * config.layerThickness; //Allow for a 60deg angle in the oozeShield.
+            for (unsigned int layerNr = 1; layerNr < totalLayers; layerNr++)
+                storage.oozeShield[layerNr] = storage.oozeShield[layerNr].unionPolygons(storage.oozeShield[layerNr - 1].offset(-offsetAngle));
+            for (unsigned int layerNr = totalLayers - 1; layerNr > 0; layerNr--)
+                storage.oozeShield[layerNr - 1] = storage.oozeShield[layerNr - 1].unionPolygons(storage.oozeShield[layerNr].offset(-offsetAngle));
         }
         cura::log("Generated inset in %5.3fs\n", timeKeeper.restart());
 
-        for(unsigned int layerNr=0; layerNr<totalLayers; layerNr++)
+        for (unsigned int layerNr = 0; layerNr < totalLayers; layerNr++)
         {
-            if (!config.spiralizeMode || static_cast<int>(layerNr) < config.downSkinCount)    //Only generate up/downskin and infill for the first X layers when spiralize is choosen.
+            if (!config.spiralizeMode || static_cast<int>(layerNr) < config.downSkinCount) //Only generate up/downskin and infill for the first X layers when spiralize is choosen.
             {
-                for(unsigned int volumeIdx=0; volumeIdx<storage.volumes.size(); volumeIdx++)
+                for (unsigned int volumeIdx = 0; volumeIdx < storage.volumes.size(); volumeIdx++)
                 {
                     int extrusionWidth = config.extrusionWidth;
                     if (layerNr == 0)
@@ -308,12 +315,12 @@ private:
                     generateSkins(layerNr, storage.volumes[volumeIdx], extrusionWidth, config.downSkinCount, config.upSkinCount, config.infillOverlap);
                     generateSparse(layerNr, storage.volumes[volumeIdx], extrusionWidth, config.downSkinCount, config.upSkinCount);
 
-                    SliceLayer* layer = &storage.volumes[volumeIdx].layers[layerNr];
-                    for(unsigned int partNr=0; partNr<layer->parts.size(); partNr++)
+                    SliceLayer *layer = &storage.volumes[volumeIdx].layers[layerNr];
+                    for (unsigned int partNr = 0; partNr < layer->parts.size(); partNr++)
                         sendPolygonsToGui("skin", layerNr, layer->printZ, layer->parts[partNr].skinOutline);
                 }
             }
-            cura::logProgress("skin",layerNr+1,totalLayers);
+            cura::logProgress("skin", layerNr + 1, totalLayers);
         }
         cura::log("Generated up/down skin in %5.3fs\n", timeKeeper.restart());
 
@@ -323,180 +330,184 @@ private:
             double wipeTowerVolume = static_cast<double>(config.wipeTowerVolume);
             double layerThickness = INT2MM(config.layerThickness);
             double minSizeFactor = 6.0;
-            if(config.wipeTowerShape == 5)
+            if (config.wipeTowerShape == 5)
             {
-              int n = 64;
-              double m = static_cast<double>(n);
-              double modelMaxX = storage.modelMax.x / 1000.0;
-              double modelMinX = storage.modelMin.x / 1000.0;
-              double modelMaxY = storage.modelMax.x / 1000.0;
-              double modelMinY = storage.modelMin.x / 1000.0;
-              double w = (wipeTowerVolume / (layerThickness * ((modelMaxX - modelMinX) / 2 + (modelMaxY - modelMinY) / 2))) * 1000.0;
-              w = std::max(static_cast<double>(config.extrusionWidth) * minSizeFactor, w);
-              double r = w / 2;
+                int n = 64;
+                double m = static_cast<double>(n);
+                double modelMaxX = storage.modelMax.x / 1000.0;
+                double modelMinX = storage.modelMin.x / 1000.0;
+                double modelMaxY = storage.modelMax.x / 1000.0;
+                double modelMinY = storage.modelMin.x / 1000.0;
+                double wipeTowerA = 4 + M_PI;
+                double wipeTowerB = 2 * ((modelMaxX - modelMinX) / 2 + (modelMaxY - modelMinY) / 2 + 2 * wipeTowerOffset / 1000.0);
+                double wipeTowerC = -(wipeTowerVolume / layerThickness);
+                double wipeTowerDelta = wipeTowerB * wipeTowerB - 4 * wipeTowerA * wipeTowerC;
+                double w = 1000.0 * (-wipeTowerB + sqrt(wipeTowerDelta)) / (2 * wipeTowerA);
+                //double w = (wipeTowerVolume / (layerThickness * ((modelMaxX - modelMinX) / 2 + (modelMaxY - modelMinY) / 2))) * 1000.0;
+                w = std::max(static_cast<double>(config.extrusionWidth) * minSizeFactor, w);
+                double r = w / 2;
 
-              Point c0 = Point(storage.modelMax.x + wipeTowerOffset + r, (storage.modelMin.y + storage.modelMax.y) / 2);
-              Point c1 = Point((storage.modelMin.x + storage.modelMax.x) / 2, storage.modelMax.y + wipeTowerOffset + r);
-              Point c2 = Point(storage.modelMax.x, storage.modelMax.y);
+                Point c0 = Point(storage.modelMax.x + wipeTowerOffset + r, (storage.modelMin.y + storage.modelMax.y) / 2);
+                Point c1 = Point((storage.modelMin.x + storage.modelMax.x) / 2, storage.modelMax.y + wipeTowerOffset + r);
+                Point c2 = Point(storage.modelMax.x, storage.modelMax.y);
 
-              PolygonRef p = storage.wipeTower.newPoly();
-              //p.add(Point(storage.modelMax.x + wipeTowerOffset, storage.modelMax.y + wipeTowerOffset));
-              for(int i = n / 4; i >= 0; i--)
-                p.add(Point(c2.X + cos(2 * M_PI * i / m) * wipeTowerOffset, c2.Y + sin(2 * M_PI * i / m) * wipeTowerOffset));
-              for(int i = n / 2; i <= n; i++)
-                p.add(Point(c0.X + cos(2 * M_PI * i / m) * r, c0.Y + sin(2 * M_PI * i / m) * r));
-              //p.add(Point(storage.modelMax.x + wipeTowerOffset + w, storage.modelMax.y + wipeTowerOffset + w));
-              for(int i = 0; i <= n / 4; i++)
-                p.add(Point(c2.X + cos(2 * M_PI * i / m) * (w + wipeTowerOffset), c2.Y + sin(2 * M_PI * i / m) * (w + wipeTowerOffset)));
-              for(int i = n / 4; i <= 3 * n / 4; i++)
-                p.add(Point(c1.X + cos(2 * M_PI * i / m) * r, c1.Y + sin(2 * M_PI * i / m) * r));
+                PolygonRef p = storage.wipeTower.newPoly();
+                //p.add(Point(storage.modelMax.x + wipeTowerOffset, storage.modelMax.y + wipeTowerOffset));
+                for (int i = n / 4; i >= 0; i--)
+                    p.add(Point(c2.X + cos(2 * M_PI * i / m) * wipeTowerOffset, c2.Y + sin(2 * M_PI * i / m) * wipeTowerOffset));
+                for (int i = n / 2; i <= n; i++)
+                    p.add(Point(c0.X + cos(2 * M_PI * i / m) * r, c0.Y + sin(2 * M_PI * i / m) * r));
+                //p.add(Point(storage.modelMax.x + wipeTowerOffset + w, storage.modelMax.y + wipeTowerOffset + w));
+                for (int i = 0; i <= n / 4; i++)
+                    p.add(Point(c2.X + cos(2 * M_PI * i / m) * (w + wipeTowerOffset), c2.Y + sin(2 * M_PI * i / m) * (w + wipeTowerOffset)));
+                for (int i = n / 4; i <= 3 * n / 4; i++)
+                    p.add(Point(c1.X + cos(2 * M_PI * i / m) * r, c1.Y + sin(2 * M_PI * i / m) * r));
 
-
-              storage.wipePoint = Point(storage.modelMax.x + wipeTowerOffset, storage.modelMax.y + wipeTowerOffset);
+                storage.wipePoint = Point(storage.modelMax.x + wipeTowerOffset, storage.modelMax.y + wipeTowerOffset);
             }
-            else if(config.wipeTowerShape == 4)
+            else if (config.wipeTowerShape == 4)
             {
-              int n = 64;
-              double m = static_cast<double>(n);
-              double modelMaxY = storage.modelMax.y / 1000.0;
-              double modelMinY = storage.modelMin.y / 1000.0;
-              double rWidth = (wipeTowerVolume / (layerThickness * (modelMaxY - modelMinY))) * 1000.0;
-              rWidth = std::max(static_cast<double>(config.extrusionWidth) * minSizeFactor, rWidth);
-              double cRadius = rWidth * 0.75;
-              double cHoleRadius = rWidth / 3;
-              //double d = sqrt(cRadius * cRadius - rWidth * rWidth / 4);
-              Point cCenter0 = Point(storage.modelMax.x + wipeTowerOffset + rWidth / 2, storage.modelMin.y - cRadius);
-              Point cCenter1 = Point(storage.modelMax.x + wipeTowerOffset + rWidth / 2, storage.modelMax.y + cRadius);
+                int n = 64;
+                double m = static_cast<double>(n);
+                double modelMaxY = storage.modelMax.y / 1000.0;
+                double modelMinY = storage.modelMin.y / 1000.0;
+                double rWidth = (wipeTowerVolume / (layerThickness * (modelMaxY - modelMinY))) * 1000.0;
+                rWidth = std::max(static_cast<double>(config.extrusionWidth) * minSizeFactor, rWidth);
+                double cRadius = rWidth * 0.75;
+                double cHoleRadius = rWidth / 3;
+                //double d = sqrt(cRadius * cRadius - rWidth * rWidth / 4);
+                Point cCenter0 = Point(storage.modelMax.x + wipeTowerOffset + rWidth / 2, storage.modelMin.y - cRadius);
+                Point cCenter1 = Point(storage.modelMax.x + wipeTowerOffset + rWidth / 2, storage.modelMax.y + cRadius);
 
-              PolygonRef pRect = storage.wipeTower.newPoly();
-              pRect.add(Point(storage.modelMax.x + wipeTowerOffset + rWidth, storage.modelMax.y));
-              for(int i=0; i <= n / 2; i++)
-                pRect.add(Point(cCenter1.X + cos(2 * M_PI * i / m) * cRadius, cCenter1.Y + sin(2 * M_PI * i / m) * cRadius));
-              pRect.add(Point(storage.modelMax.x + wipeTowerOffset, storage.modelMax.y));
-              pRect.add(Point(storage.modelMax.x + wipeTowerOffset, storage.modelMin.y));
-              for(int i=n / 2; i <= n; i++)
-                pRect.add(Point(cCenter0.X + cos(2 * M_PI * i / m) * cRadius, cCenter0.Y + sin(2 * M_PI * i / m) * cRadius));
-              pRect.add(Point(storage.modelMax.x + wipeTowerOffset + rWidth, storage.modelMin.y));
+                PolygonRef pRect = storage.wipeTower.newPoly();
+                pRect.add(Point(storage.modelMax.x + wipeTowerOffset + rWidth, storage.modelMax.y));
+                for (int i = 0; i <= n / 2; i++)
+                    pRect.add(Point(cCenter1.X + cos(2 * M_PI * i / m) * cRadius, cCenter1.Y + sin(2 * M_PI * i / m) * cRadius));
+                pRect.add(Point(storage.modelMax.x + wipeTowerOffset, storage.modelMax.y));
+                pRect.add(Point(storage.modelMax.x + wipeTowerOffset, storage.modelMin.y));
+                for (int i = n / 2; i <= n; i++)
+                    pRect.add(Point(cCenter0.X + cos(2 * M_PI * i / m) * cRadius, cCenter0.Y + sin(2 * M_PI * i / m) * cRadius));
+                pRect.add(Point(storage.modelMax.x + wipeTowerOffset + rWidth, storage.modelMin.y));
 
-              //pRect.reverse();
-/*
+                //pRect.reverse();
+                /*
               PolygonRef pCirc0 = storage.wipeTower.newPoly();
               for(int i=0; i < n; i++)
                 pCirc0.add(Point(cCenter0.X + cos(2 * M_PI * i / m) * cRadius, cCenter0.Y + sin(2 * M_PI * i / m) * cRadius));
 */
-              PolygonRef pCirc0Hole = storage.wipeTower.newPoly();
-              for(int i=0; i < n; i++)
-                pCirc0Hole.add(Point(cCenter0.X + cos(2 * M_PI * i / m) * cHoleRadius, cCenter0.Y + sin(2 * M_PI * i / m) * cHoleRadius));
-              pCirc0Hole.reverse();
+                PolygonRef pCirc0Hole = storage.wipeTower.newPoly();
+                for (int i = 0; i < n; i++)
+                    pCirc0Hole.add(Point(cCenter0.X + cos(2 * M_PI * i / m) * cHoleRadius, cCenter0.Y + sin(2 * M_PI * i / m) * cHoleRadius));
+                pCirc0Hole.reverse();
 
-/*
+                /*
               PolygonRef pCirc1 = storage.wipeTower.newPoly();
               for(int i=0; i < n; i++)
                 pCirc1.add(Point(cCenter1.X + cos(2 * M_PI * i / m) * cRadius, cCenter1.Y + sin(2 * M_PI * i / m) * cRadius));
 */
-              PolygonRef pCirc1Hole = storage.wipeTower.newPoly();
-              for(int i=0; i < n; i++)
-                pCirc1Hole.add(Point(cCenter1.X + cos(2 * M_PI * i / m) * cHoleRadius, cCenter1.Y + sin(2 * M_PI * i / m) * cHoleRadius));
-              pCirc1Hole.reverse();
+                PolygonRef pCirc1Hole = storage.wipeTower.newPoly();
+                for (int i = 0; i < n; i++)
+                    pCirc1Hole.add(Point(cCenter1.X + cos(2 * M_PI * i / m) * cHoleRadius, cCenter1.Y + sin(2 * M_PI * i / m) * cHoleRadius));
+                pCirc1Hole.reverse();
 
-              storage.wipePoint = Point(storage.modelMax.x + wipeTowerOffset + rWidth / 2, (storage.modelMin.y + storage.modelMax.y) / 2);
+                storage.wipePoint = Point(storage.modelMax.x + wipeTowerOffset + rWidth / 2, (storage.modelMin.y + storage.modelMax.y) / 2);
             }
-            else if(config.wipeTowerShape == 3)
+            else if (config.wipeTowerShape == 3)
             {
-              double wipeTowerLength = 1000.0;
-              double modelMaxY = storage.modelMax.y / 1000.0;
-              double modelMinY = storage.modelMin.y / 1000.0;
-              double modelMaxX = storage.modelMax.x / 1000.0;
-              double modelMinX = storage.modelMin.x / 1000.0;
-              double wipeTowerA = 2.0;
-              double wipeTowerB = 2 * wipeTowerLength / 1000.0 + (modelMaxX - modelMinX) + 4 * wipeTowerOffset / 1000.0;
-              double wipeTowerC = -(wipeTowerVolume / layerThickness);
-              double wipeTowerDelta = wipeTowerB * wipeTowerB - 4 * wipeTowerA * wipeTowerC;
-              double wipeTowerWidth = 1000.0 * (-wipeTowerB + sqrt(wipeTowerDelta)) / (2 * wipeTowerA);
-              wipeTowerWidth = std::max(static_cast<double>(config.extrusionWidth) * minSizeFactor, wipeTowerWidth);
-              PolygonRef p = storage.wipeTower.newPoly();
-              //p.add(Point((storage.modelMax.x + storage.modelMin.x) / 2, storage.modelMax.y + wipeTowerOffset));
-              p.add(Point(storage.modelMax.x + wipeTowerOffset, storage.modelMax.y + wipeTowerOffset));
-              p.add(Point(storage.modelMax.x + wipeTowerOffset, storage.modelMax.y - wipeTowerWidth - wipeTowerLength));
-              p.add(Point(storage.modelMax.x + wipeTowerOffset + wipeTowerWidth, storage.modelMax.y - wipeTowerWidth - wipeTowerLength));
-              p.add(Point(storage.modelMax.x + wipeTowerOffset + wipeTowerWidth, storage.modelMax.y + wipeTowerOffset + wipeTowerWidth));
-              p.add(Point(storage.modelMin.x - wipeTowerOffset - wipeTowerWidth, storage.modelMax.y + wipeTowerOffset + wipeTowerWidth));
-              p.add(Point(storage.modelMin.x - wipeTowerOffset - wipeTowerWidth, storage.modelMax.y - wipeTowerWidth - wipeTowerLength));
-              p.add(Point(storage.modelMin.x - wipeTowerOffset, storage.modelMax.y - wipeTowerWidth - wipeTowerLength));
-              p.add(Point(storage.modelMin.x - wipeTowerOffset, storage.modelMax.y + wipeTowerOffset));
+                double wipeTowerLength = 1000.0;
+                double modelMaxY = storage.modelMax.y / 1000.0;
+                double modelMinY = storage.modelMin.y / 1000.0;
+                double modelMaxX = storage.modelMax.x / 1000.0;
+                double modelMinX = storage.modelMin.x / 1000.0;
+                double wipeTowerA = 2.0;
+                double wipeTowerB = 2 * wipeTowerLength / 1000.0 + (modelMaxX - modelMinX) + 4 * wipeTowerOffset / 1000.0;
+                double wipeTowerC = -(wipeTowerVolume / layerThickness);
+                double wipeTowerDelta = wipeTowerB * wipeTowerB - 4 * wipeTowerA * wipeTowerC;
+                double wipeTowerWidth = 1000.0 * (-wipeTowerB + sqrt(wipeTowerDelta)) / (2 * wipeTowerA);
+                wipeTowerWidth = std::max(static_cast<double>(config.extrusionWidth) * minSizeFactor, wipeTowerWidth);
+                PolygonRef p = storage.wipeTower.newPoly();
+                //p.add(Point((storage.modelMax.x + storage.modelMin.x) / 2, storage.modelMax.y + wipeTowerOffset));
+                p.add(Point(storage.modelMax.x + wipeTowerOffset, storage.modelMax.y + wipeTowerOffset));
+                p.add(Point(storage.modelMax.x + wipeTowerOffset, storage.modelMax.y - wipeTowerWidth - wipeTowerLength));
+                p.add(Point(storage.modelMax.x + wipeTowerOffset + wipeTowerWidth, storage.modelMax.y - wipeTowerWidth - wipeTowerLength));
+                p.add(Point(storage.modelMax.x + wipeTowerOffset + wipeTowerWidth, storage.modelMax.y + wipeTowerOffset + wipeTowerWidth));
+                p.add(Point(storage.modelMin.x - wipeTowerOffset - wipeTowerWidth, storage.modelMax.y + wipeTowerOffset + wipeTowerWidth));
+                p.add(Point(storage.modelMin.x - wipeTowerOffset - wipeTowerWidth, storage.modelMax.y - wipeTowerWidth - wipeTowerLength));
+                p.add(Point(storage.modelMin.x - wipeTowerOffset, storage.modelMax.y - wipeTowerWidth - wipeTowerLength));
+                p.add(Point(storage.modelMin.x - wipeTowerOffset, storage.modelMax.y + wipeTowerOffset));
 
-              storage.wipePoint = Point((storage.modelMax.x + storage.modelMin.x) / 2, storage.modelMax.y + wipeTowerOffset + wipeTowerWidth / 2);
+                storage.wipePoint = Point((storage.modelMax.x + storage.modelMin.x) / 2, storage.modelMax.y + wipeTowerOffset + wipeTowerWidth / 2);
             }
-            else if(config.wipeTowerShape == 2)
+            else if (config.wipeTowerShape == 2)
             {
-              double modelMaxX = storage.modelMax.x / 1000.0;
-              double modelMinX = storage.modelMin.x / 1000.0;
-              double wipeTowerSize = (wipeTowerVolume / (layerThickness * (modelMaxX - modelMinX))) * 1000.0;
-              wipeTowerSize = std::max(static_cast<double>(config.extrusionWidth) * minSizeFactor, wipeTowerSize);
-              PolygonRef p = storage.wipeTower.newPoly();
-              p.add(Point(storage.modelMin.x, storage.modelMax.y + wipeTowerOffset));
-              p.add(Point(storage.modelMin.x, storage.modelMax.y + wipeTowerOffset + wipeTowerSize));
-              p.add(Point(storage.modelMax.x, storage.modelMax.y + wipeTowerOffset + wipeTowerSize));
-              p.add(Point(storage.modelMax.x, storage.modelMax.y + wipeTowerOffset));
+                double modelMaxX = storage.modelMax.x / 1000.0;
+                double modelMinX = storage.modelMin.x / 1000.0;
+                double wipeTowerSize = (wipeTowerVolume / (layerThickness * (modelMaxX - modelMinX))) * 1000.0;
+                wipeTowerSize = std::max(static_cast<double>(config.extrusionWidth) * minSizeFactor, wipeTowerSize);
+                PolygonRef p = storage.wipeTower.newPoly();
+                p.add(Point(storage.modelMin.x, storage.modelMax.y + wipeTowerOffset));
+                p.add(Point(storage.modelMin.x, storage.modelMax.y + wipeTowerOffset + wipeTowerSize));
+                p.add(Point(storage.modelMax.x, storage.modelMax.y + wipeTowerOffset + wipeTowerSize));
+                p.add(Point(storage.modelMax.x, storage.modelMax.y + wipeTowerOffset));
 
-              storage.wipePoint = Point((storage.modelMin.x + storage.modelMax.x) / 2, storage.modelMax.y + wipeTowerOffset + wipeTowerSize / 2);
+                storage.wipePoint = Point((storage.modelMin.x + storage.modelMax.x) / 2, storage.modelMax.y + wipeTowerOffset + wipeTowerSize / 2);
             }
-            else if(config.wipeTowerShape == 1)
+            else if (config.wipeTowerShape == 1)
             {
-              int n = 64;
-              double m = static_cast<double>(n);
-              double wipeTowerHoleFactor = 2.0;
-              double wipeTowerRadius = sqrt((wipeTowerHoleFactor * wipeTowerHoleFactor * wipeTowerVolume)/(M_PI * layerThickness * (wipeTowerHoleFactor * wipeTowerHoleFactor - 1))) * 1000.0;
-              wipeTowerRadius = std::max(static_cast<double>(config.extrusionWidth) * minSizeFactor, wipeTowerRadius);
-              storage.wipePoint = Point(storage.modelMin.x - wipeTowerOffset - wipeTowerRadius / 2, storage.modelMax.y + wipeTowerOffset + wipeTowerRadius / 2);
+                int n = 64;
+                double m = static_cast<double>(n);
+                double wipeTowerHoleFactor = 2.0;
+                double wipeTowerRadius = sqrt((wipeTowerHoleFactor * wipeTowerHoleFactor * wipeTowerVolume) / (M_PI * layerThickness * (wipeTowerHoleFactor * wipeTowerHoleFactor - 1))) * 1000.0;
+                wipeTowerRadius = std::max(static_cast<double>(config.extrusionWidth) * minSizeFactor, wipeTowerRadius);
+                storage.wipePoint = Point(storage.modelMin.x - wipeTowerOffset - wipeTowerRadius / 2, storage.modelMax.y + wipeTowerOffset + wipeTowerRadius / 2);
 
-              PolygonRef p = storage.wipeTower.newPoly();
-              for(int i=0; i < n; i++)
-                p.add(Point(storage.wipePoint.X + cos(2 * M_PI * i / m) * wipeTowerRadius, storage.wipePoint.Y + sin(2 * M_PI * i / m) * wipeTowerRadius));
+                PolygonRef p = storage.wipeTower.newPoly();
+                for (int i = 0; i < n; i++)
+                    p.add(Point(storage.wipePoint.X + cos(2 * M_PI * i / m) * wipeTowerRadius, storage.wipePoint.Y + sin(2 * M_PI * i / m) * wipeTowerRadius));
 
-              wipeTowerRadius = wipeTowerRadius / wipeTowerHoleFactor;
+                wipeTowerRadius = wipeTowerRadius / wipeTowerHoleFactor;
 
-              PolygonRef pHole = storage.wipeTower.newPoly();
-              for(int i=0; i < n; i++)
-                pHole.add(Point(storage.wipePoint.X + cos(2 * M_PI * i / m) * wipeTowerRadius, storage.wipePoint.Y + sin(2 * M_PI * i / m) * wipeTowerRadius));
+                PolygonRef pHole = storage.wipeTower.newPoly();
+                for (int i = 0; i < n; i++)
+                    pHole.add(Point(storage.wipePoint.X + cos(2 * M_PI * i / m) * wipeTowerRadius, storage.wipePoint.Y + sin(2 * M_PI * i / m) * wipeTowerRadius));
 
-              pHole.reverse();
+                pHole.reverse();
             }
-            else if(config.wipeTowerShape == 0)
+            else if (config.wipeTowerShape == 0)
             {
-              double modelMaxY = storage.modelMax.y / 1000.0;
-              double modelMinY = storage.modelMin.y / 1000.0;
-              double modelMaxX = storage.modelMax.x / 1000.0;
-              double modelMinX = storage.modelMin.x / 1000.0;
-              double wipeTowerA = 2.0;
-              double wipeTowerB = 2 * (modelMaxY - modelMinY) + (modelMaxX - modelMinX) + 4 * wipeTowerOffset / 1000.0;
-              double wipeTowerC = -(wipeTowerVolume / layerThickness);
-              double wipeTowerDelta = wipeTowerB * wipeTowerB - 4 * wipeTowerA * wipeTowerC;
-              double wipeTowerWidth = 1000.0 * (-wipeTowerB + sqrt(wipeTowerDelta)) / (2 * wipeTowerA);
-              wipeTowerWidth = std::max(static_cast<double>(config.extrusionWidth) * minSizeFactor, wipeTowerWidth);
-              PolygonRef p = storage.wipeTower.newPoly();
-              p.add(Point(storage.modelMax.x + wipeTowerOffset, storage.modelMin.y));
-              p.add(Point(storage.modelMax.x + wipeTowerOffset + wipeTowerWidth, storage.modelMin.y));
-              p.add(Point(storage.modelMax.x + wipeTowerOffset + wipeTowerWidth, storage.modelMax.y + wipeTowerOffset + wipeTowerWidth));
-              p.add(Point(storage.modelMin.x - wipeTowerOffset - wipeTowerWidth, storage.modelMax.y + wipeTowerOffset + wipeTowerWidth));
-              p.add(Point(storage.modelMin.x - wipeTowerOffset - wipeTowerWidth, storage.modelMin.y));
-              p.add(Point(storage.modelMin.x - wipeTowerOffset, storage.modelMin.y));
-              p.add(Point(storage.modelMin.x - wipeTowerOffset, storage.modelMax.y + wipeTowerOffset));
-              p.add(Point(storage.modelMax.x + wipeTowerOffset, storage.modelMax.y + wipeTowerOffset));
+                double modelMaxY = storage.modelMax.y / 1000.0;
+                double modelMinY = storage.modelMin.y / 1000.0;
+                double modelMaxX = storage.modelMax.x / 1000.0;
+                double modelMinX = storage.modelMin.x / 1000.0;
+                double wipeTowerA = 2.0;
+                double wipeTowerB = 2 * (modelMaxY - modelMinY) + (modelMaxX - modelMinX) + 4 * wipeTowerOffset / 1000.0;
+                double wipeTowerC = -(wipeTowerVolume / layerThickness);
+                double wipeTowerDelta = wipeTowerB * wipeTowerB - 4 * wipeTowerA * wipeTowerC;
+                double wipeTowerWidth = 1000.0 * (-wipeTowerB + sqrt(wipeTowerDelta)) / (2 * wipeTowerA);
+                wipeTowerWidth = std::max(static_cast<double>(config.extrusionWidth) * minSizeFactor, wipeTowerWidth);
+                PolygonRef p = storage.wipeTower.newPoly();
+                p.add(Point(storage.modelMax.x + wipeTowerOffset, storage.modelMin.y));
+                p.add(Point(storage.modelMax.x + wipeTowerOffset + wipeTowerWidth, storage.modelMin.y));
+                p.add(Point(storage.modelMax.x + wipeTowerOffset + wipeTowerWidth, storage.modelMax.y + wipeTowerOffset + wipeTowerWidth));
+                p.add(Point(storage.modelMin.x - wipeTowerOffset - wipeTowerWidth, storage.modelMax.y + wipeTowerOffset + wipeTowerWidth));
+                p.add(Point(storage.modelMin.x - wipeTowerOffset - wipeTowerWidth, storage.modelMin.y));
+                p.add(Point(storage.modelMin.x - wipeTowerOffset, storage.modelMin.y));
+                p.add(Point(storage.modelMin.x - wipeTowerOffset, storage.modelMax.y + wipeTowerOffset));
+                p.add(Point(storage.modelMax.x + wipeTowerOffset, storage.modelMax.y + wipeTowerOffset));
 
-              storage.wipePoint = Point((storage.modelMax.x - storage.modelMin.x) / 2, storage.modelMax.y + wipeTowerOffset + wipeTowerWidth / 2);
+                storage.wipePoint = Point((storage.modelMax.x - storage.modelMin.x) / 2, storage.modelMax.y + wipeTowerOffset + wipeTowerWidth / 2);
             }
             else
             {
-              double wipeTowerSize = sqrt(wipeTowerVolume / layerThickness) * 1000.0;
-              wipeTowerSize = std::max(static_cast<double>(config.extrusionWidth) * minSizeFactor, wipeTowerSize);
-              PolygonRef p = storage.wipeTower.newPoly();
-              p.add(Point(storage.modelMin.x - wipeTowerOffset, storage.modelMax.y + wipeTowerOffset));
-              p.add(Point(storage.modelMin.x - wipeTowerOffset, storage.modelMax.y + wipeTowerOffset + wipeTowerSize));
-              p.add(Point(storage.modelMin.x - wipeTowerOffset - wipeTowerSize, storage.modelMax.y + wipeTowerOffset + wipeTowerSize));
-              p.add(Point(storage.modelMin.x - wipeTowerOffset - wipeTowerSize, storage.modelMax.y + wipeTowerOffset));
+                double wipeTowerSize = sqrt(wipeTowerVolume / layerThickness) * 1000.0;
+                wipeTowerSize = std::max(static_cast<double>(config.extrusionWidth) * minSizeFactor, wipeTowerSize);
+                PolygonRef p = storage.wipeTower.newPoly();
+                p.add(Point(storage.modelMin.x - wipeTowerOffset, storage.modelMax.y + wipeTowerOffset));
+                p.add(Point(storage.modelMin.x - wipeTowerOffset, storage.modelMax.y + wipeTowerOffset + wipeTowerSize));
+                p.add(Point(storage.modelMin.x - wipeTowerOffset - wipeTowerSize, storage.modelMax.y + wipeTowerOffset + wipeTowerSize));
+                p.add(Point(storage.modelMin.x - wipeTowerOffset - wipeTowerSize, storage.modelMax.y + wipeTowerOffset));
 
-              storage.wipePoint = Point(storage.modelMin.x - wipeTowerOffset - wipeTowerSize / 2, storage.modelMax.y + wipeTowerOffset + wipeTowerSize / 2);
+                storage.wipePoint = Point(storage.modelMin.x - wipeTowerOffset - wipeTowerSize / 2, storage.modelMax.y + wipeTowerOffset + wipeTowerSize / 2);
             }
         }
 
@@ -509,7 +520,7 @@ private:
         sendPolygonsToGui("skirt", 0, config.initialLayerThickness, storage.skirt);
     }
 
-    void writeGCode(SliceDataStorage& storage)
+    void writeGCode(SliceDataStorage &storage)
     {
         if (fileNr == 1)
         {
@@ -528,7 +539,9 @@ private:
                 gcode.writeComment("enable auto-retraction");
                 gcode.writeLine("M227 S%d P%d", config.retractionAmount[gcode.getExtruderNr()] * 2560 / 1000, config.retractionAmount[gcode.getExtruderNr()] * 2560 / 1000);
             }
-        }else{
+        }
+        else
+        {
             gcode.writeFanCommand(0);
             gcode.resetExtrusionValue();
             gcode.writeRetraction();
@@ -570,7 +583,8 @@ private:
                 gcodeLayer.writeGCode(false, config.raftBaseThickness);
             }
 
-            if (config.raftFanSpeed) {
+            if (config.raftFanSpeed)
+            {
                 gcode.writeFanCommand(config.raftFanSpeed);
             }
 
@@ -588,12 +602,12 @@ private:
                 gcodeLayer.writeGCode(false, config.raftInterfaceThickness);
             }
 
-            for (int raftSurfaceLayer=1; raftSurfaceLayer<=config.raftSurfaceLayers; raftSurfaceLayer++)
+            for (int raftSurfaceLayer = 1; raftSurfaceLayer <= config.raftSurfaceLayers; raftSurfaceLayer++)
             {
                 gcode.writeComment("LAYER:-1");
                 gcode.writeComment("RAFT");
                 GCodePlanner gcodeLayer(gcode, config.moveSpeed, config.retractionMinimalDistance);
-                gcode.setZ(config.raftBaseThickness + config.raftInterfaceThickness + config.raftSurfaceThickness*raftSurfaceLayer);
+                gcode.setZ(config.raftBaseThickness + config.raftInterfaceThickness + config.raftSurfaceThickness * raftSurfaceLayer);
                 gcode.setExtrusion(config.raftSurfaceThickness, config.filamentDiameter, config.filamentFlow);
 
                 Polygons raftLines;
@@ -605,9 +619,9 @@ private:
         }
 
         int volumeIdx = 0;
-        for(unsigned int layerNr=0; layerNr<totalLayers; layerNr++)
+        for (unsigned int layerNr = 0; layerNr < totalLayers; layerNr++)
         {
-            cura::logProgress("export", layerNr+1, totalLayers);
+            cura::logProgress("export", layerNr + 1, totalLayers);
 
             int extrusionWidth = config.extrusionWidth;
             if (layerNr == 0)
@@ -616,16 +630,18 @@ private:
             {
                 int n = config.initialSpeedupLayers;
 #define SPEED_SMOOTH(speed) \
-                std::min<int>((speed), (((speed)*layerNr)/n + (config.initialLayerSpeed*(n-layerNr)/n)))
+    std::min<int>((speed), (((speed)*layerNr) / n + (config.initialLayerSpeed * (n - layerNr) / n)))
                 skirtConfig.setData(SPEED_SMOOTH(config.printSpeed), extrusionWidth, "SKIRT");
                 inset0Config.setData(SPEED_SMOOTH(config.inset0Speed), extrusionWidth, "WALL-OUTER");
                 insetXConfig.setData(SPEED_SMOOTH(config.insetXSpeed), extrusionWidth, "WALL-INNER");
-                infillConfig.setData(SPEED_SMOOTH(config.infillSpeed), extrusionWidth,  "FILL");
-                skinConfig.setData(SPEED_SMOOTH(config.skinSpeed), extrusionWidth,  "SKIN");
+                infillConfig.setData(SPEED_SMOOTH(config.infillSpeed), extrusionWidth, "FILL");
+                skinConfig.setData(SPEED_SMOOTH(config.skinSpeed), extrusionWidth, "SKIN");
                 supportConfig.setData(SPEED_SMOOTH(config.printSpeed), extrusionWidth, "SUPPORT");
                 wipeTowerConfig.setData(SPEED_SMOOTH(config.printSpeed), extrusionWidth, "WIPE-TOWER");
 #undef SPEED_SMOOTH
-            }else{
+            }
+            else
+            {
                 skirtConfig.setData(config.printSpeed, extrusionWidth, "SKIRT");
                 inset0Config.setData(config.inset0Speed, extrusionWidth, "WALL-OUTER");
                 insetXConfig.setData(config.insetXSpeed, extrusionWidth, "WALL-INNER");
@@ -637,21 +653,26 @@ private:
 
             gcode.writeComment("LAYER:%d", layerNr);
             gcode.writeLine("M117 Nb = %d / %d", layerNr + 1, totalLayers);
-            if (layerNr == 0){
+            if (layerNr == 0)
+            {
                 gcode.setExtrusion(config.initialLayerThickness, config.filamentDiameter, config.filamentFlow);
-            }else{
+            }
+            else
+            {
                 gcode.setExtrusion(config.layerThickness, config.filamentDiameter, config.filamentFlow);
             }
 
             GCodePlanner gcodeLayer(gcode, config.moveSpeed, config.retractionMinimalDistance);
             int32_t z = config.initialLayerThickness + layerNr * config.layerThickness;
-            z += config.raftBaseThickness + config.raftInterfaceThickness + config.raftSurfaceLayers*config.raftSurfaceThickness;
+            z += config.raftBaseThickness + config.raftInterfaceThickness + config.raftSurfaceLayers * config.raftSurfaceThickness;
             if (config.raftBaseThickness > 0 && config.raftInterfaceThickness > 0)
             {
                 if (layerNr == 0)
                 {
                     z += config.raftAirGapLayer0;
-                } else {
+                }
+                else
+                {
                     z += config.raftAirGap;
                 }
             }
@@ -662,7 +683,7 @@ private:
             if (printSupportFirst)
                 addSupportToGCode(storage, gcodeLayer, layerNr);
 
-            for(unsigned int volumeCnt = 0; volumeCnt < storage.volumes.size(); volumeCnt++)
+            for (unsigned int volumeCnt = 0; volumeCnt < storage.volumes.size(); volumeCnt++)
             {
                 if (volumeCnt > 0)
                     volumeIdx = (volumeIdx + 1) % storage.volumes.size();
@@ -678,7 +699,9 @@ private:
             if (gcodeLayer.getExtrudeSpeedFactor() <= 50)
             {
                 fanSpeed = config.fanSpeedMax;
-            }else{
+            }
+            else
+            {
                 int n = gcodeLayer.getExtrudeSpeedFactor() - 50;
                 fanSpeed = config.fanSpeedMin * n / 50 + config.fanSpeedMax * (50 - n) / 50;
             }
@@ -701,18 +724,18 @@ private:
     }
 
     //Add a single layer from a single mesh-volume to the GCode
-    void addVolumeLayerToGCode(SliceDataStorage& storage, GCodePlanner& gcodeLayer, int volumeIdx, int layerNr)
+    void addVolumeLayerToGCode(SliceDataStorage &storage, GCodePlanner &gcodeLayer, int volumeIdx, int layerNr)
     {
         int prevExtruder = gcodeLayer.getExtruder();
         bool extruderChanged = gcodeLayer.setExtruder(volumeIdx);
         if (layerNr == 0 && volumeIdx == 0 && !(config.raftBaseThickness > 0 && config.raftInterfaceThickness > 0))
         {
             if (storage.skirt.size() > 0)
-                gcodeLayer.addTravel(storage.skirt[storage.skirt.size()-1].closestPointTo(gcode.getPositionXY()));
+                gcodeLayer.addTravel(storage.skirt[storage.skirt.size() - 1].closestPointTo(gcode.getPositionXY()));
             gcodeLayer.addPolygonsByOptimizer(storage.skirt, &skirtConfig);
         }
 
-        SliceLayer* layer = &storage.volumes[volumeIdx].layers[layerNr];
+        SliceLayer *layer = &storage.volumes[volumeIdx].layers[layerNr];
         if (extruderChanged)
             addWipeTower(storage, gcodeLayer, layerNr, prevExtruder);
 
@@ -727,32 +750,32 @@ private:
         if (config.simpleMode)
         {
             Polygons polygons;
-            for(unsigned int partNr=0; partNr<layer->parts.size(); partNr++)
+            for (unsigned int partNr = 0; partNr < layer->parts.size(); partNr++)
             {
-                for(unsigned int n=0; n<layer->parts[partNr].outline.size(); n++)
+                for (unsigned int n = 0; n < layer->parts[partNr].outline.size(); n++)
                 {
-                    for(unsigned int m=1; m<layer->parts[partNr].outline[n].size(); m++)
+                    for (unsigned int m = 1; m < layer->parts[partNr].outline[n].size(); m++)
                     {
                         Polygon p;
-                        p.add(layer->parts[partNr].outline[n][m-1]);
+                        p.add(layer->parts[partNr].outline[n][m - 1]);
                         p.add(layer->parts[partNr].outline[n][m]);
                         polygons.add(p);
                     }
                     if (layer->parts[partNr].outline[n].size() > 0)
                     {
                         Polygon p;
-                        p.add(layer->parts[partNr].outline[n][layer->parts[partNr].outline[n].size()-1]);
+                        p.add(layer->parts[partNr].outline[n][layer->parts[partNr].outline[n].size() - 1]);
                         p.add(layer->parts[partNr].outline[n][0]);
                         polygons.add(p);
                     }
                 }
             }
-            for(unsigned int n=0; n<layer->openLines.size(); n++)
+            for (unsigned int n = 0; n < layer->openLines.size(); n++)
             {
-                for(unsigned int m=1; m<layer->openLines[n].size(); m++)
+                for (unsigned int m = 1; m < layer->openLines[n].size(); m++)
                 {
                     Polygon p;
-                    p.add(layer->openLines[n][m-1]);
+                    p.add(layer->openLines[n][m - 1]);
                     p.add(layer->openLines[n][m]);
                     polygons.add(p);
                 }
@@ -764,22 +787,22 @@ private:
             return;
         }
 
-
         PathOrderOptimizer partOrderOptimizer(gcode.getStartPositionXY());
-        for(unsigned int partNr=0; partNr<layer->parts.size(); partNr++)
+        for (unsigned int partNr = 0; partNr < layer->parts.size(); partNr++)
         {
             partOrderOptimizer.addPolygon(layer->parts[partNr].insets[0][0]);
         }
         partOrderOptimizer.optimize();
 
-        for(unsigned int partCounter=0; partCounter<partOrderOptimizer.polyOrder.size(); partCounter++)
+        for (unsigned int partCounter = 0; partCounter < partOrderOptimizer.polyOrder.size(); partCounter++)
         {
-            SliceLayerPart* part = &layer->parts[partOrderOptimizer.polyOrder[partCounter]];
+            SliceLayerPart *part = &layer->parts[partOrderOptimizer.polyOrder[partCounter]];
 
             if (config.enableCombing == COMBING_OFF)
             {
                 gcodeLayer.setAlwaysRetract(true);
-            }else
+            }
+            else
             {
                 gcodeLayer.setCombBoundary(&part->combBoundery);
                 gcodeLayer.setAlwaysRetract(false);
@@ -797,18 +820,19 @@ private:
             {
                 addInfillToGCode(part, gcodeLayer, layerNr, extrusionWidth, fillAngle);
                 addInsetToGCode(part, gcodeLayer, layerNr);
-            }else
+            }
+            else
             {
                 addInsetToGCode(part, gcodeLayer, layerNr);
                 addInfillToGCode(part, gcodeLayer, layerNr, extrusionWidth, fillAngle);
             }
 
             Polygons skinPolygons;
-            for(Polygons outline : part->skinOutline.splitIntoParts())
+            for (Polygons outline : part->skinOutline.splitIntoParts())
             {
                 int bridge = -1;
                 if (layerNr > 0)
-                    bridge = bridgeAngle(outline, &storage.volumes[volumeIdx].layers[layerNr-1]);
+                    bridge = bridgeAngle(outline, &storage.volumes[volumeIdx].layers[layerNr - 1]);
                 generateLineInfill(outline, skinPolygons, extrusionWidth, extrusionWidth, config.infillOverlap, (bridge > -1) ? bridge : fillAngle);
             }
             if (config.enableCombing == COMBING_NOSKIN)
@@ -818,7 +842,6 @@ private:
             }
             gcodeLayer.addPolygonsByOptimizer(skinPolygons, &skinConfig);
 
-
             //After a layer part, make sure the nozzle is inside the comb boundary, so we do not retract on the perimeter.
             if (!config.spiralizeMode || static_cast<int>(layerNr) < config.downSkinCount)
                 gcodeLayer.moveInsideCombBoundary(config.extrusionWidth * 2);
@@ -826,46 +849,46 @@ private:
         gcodeLayer.setCombBoundary(nullptr);
     }
 
-    void addInfillToGCode(SliceLayerPart* part, GCodePlanner& gcodeLayer, int layerNr, int extrusionWidth, int fillAngle)
+    void addInfillToGCode(SliceLayerPart *part, GCodePlanner &gcodeLayer, int layerNr, int extrusionWidth, int fillAngle)
     {
         Polygons infillPolygons;
         if (config.sparseInfillLineDistance > 0)
         {
             switch (config.infillPattern)
             {
-                case INFILL_AUTOMATIC:
-                    generateAutomaticInfill(
-                        part->sparseOutline, infillPolygons, extrusionWidth,
-                        config.sparseInfillLineDistance,
-                        config.infillOverlap, fillAngle);
-                    break;
+            case INFILL_AUTOMATIC:
+                generateAutomaticInfill(
+                    part->sparseOutline, infillPolygons, extrusionWidth,
+                    config.sparseInfillLineDistance,
+                    config.infillOverlap, fillAngle);
+                break;
 
-                case INFILL_GRID:
-                    generateGridInfill(part->sparseOutline, infillPolygons,
-                                       extrusionWidth,
-                                       config.sparseInfillLineDistance,
-                                       config.infillOverlap, fillAngle);
-                    break;
+            case INFILL_GRID:
+                generateGridInfill(part->sparseOutline, infillPolygons,
+                                   extrusionWidth,
+                                   config.sparseInfillLineDistance,
+                                   config.infillOverlap, fillAngle);
+                break;
 
-                case INFILL_LINES:
-                    generateLineInfill(part->sparseOutline, infillPolygons,
-                                       extrusionWidth,
-                                       config.sparseInfillLineDistance,
-                                       config.infillOverlap, fillAngle);
-                    break;
+            case INFILL_LINES:
+                generateLineInfill(part->sparseOutline, infillPolygons,
+                                   extrusionWidth,
+                                   config.sparseInfillLineDistance,
+                                   config.infillOverlap, fillAngle);
+                break;
 
-                case INFILL_CONCENTRIC:
-                    generateConcentricInfill(
-                        part->sparseOutline, infillPolygons,
-                        config.sparseInfillLineDistance);
-                    break;
+            case INFILL_CONCENTRIC:
+                generateConcentricInfill(
+                    part->sparseOutline, infillPolygons,
+                    config.sparseInfillLineDistance);
+                break;
             }
         }
 
         gcodeLayer.addPolygonsByOptimizer(infillPolygons, &infillConfig);
     }
 
-    void addInsetToGCode(SliceLayerPart* part, GCodePlanner& gcodeLayer, int layerNr)
+    void addInsetToGCode(SliceLayerPart *part, GCodePlanner &gcodeLayer, int layerNr)
     {
         if (config.insetCount > 0)
         {
@@ -876,7 +899,7 @@ private:
                 if (static_cast<int>(layerNr) == config.downSkinCount && part->insets.size() > 0)
                     gcodeLayer.addPolygonsByOptimizer(part->insets[0], &insetXConfig);
             }
-            for(int insetNr=part->insets.size()-1; insetNr>-1; insetNr--)
+            for (int insetNr = part->insets.size() - 1; insetNr > -1; insetNr--)
             {
                 if (insetNr == 0)
                     gcodeLayer.addPolygonsByOptimizer(part->insets[insetNr], &inset0Config);
@@ -886,7 +909,7 @@ private:
         }
     }
 
-    void addSupportToGCode(SliceDataStorage& storage, GCodePlanner& gcodeLayer, int layerNr)
+    void addSupportToGCode(SliceDataStorage &storage, GCodePlanner &gcodeLayer, int layerNr)
     {
         if (!storage.support.generated)
             return;
@@ -906,10 +929,10 @@ private:
         }
         int32_t z = config.initialLayerThickness + layerNr * config.layerThickness;
         SupportPolyGenerator supportGenerator(storage.support, z);
-        for(unsigned int volumeCnt = 0; volumeCnt < storage.volumes.size(); volumeCnt++)
+        for (unsigned int volumeCnt = 0; volumeCnt < storage.volumes.size(); volumeCnt++)
         {
-            SliceLayer* layer = &storage.volumes[volumeCnt].layers[layerNr];
-            for(unsigned int n=0; n<layer->parts.size(); n++)
+            SliceLayer *layer = &storage.volumes[volumeCnt].layers[layerNr];
+            for (unsigned int n = 0; n < layer->parts.size(); n++)
                 supportGenerator.polygons = supportGenerator.polygons.difference(layer->parts[n].outline.offset(config.supportXYDistance));
         }
         //Contract and expand the suppory polygons so small sections are removed and the final polygon is smoothed a bit.
@@ -920,27 +943,29 @@ private:
         vector<Polygons> supportIslands = supportGenerator.polygons.splitIntoParts();
 
         PathOrderOptimizer islandOrderOptimizer(gcode.getPositionXY());
-        for(unsigned int n=0; n<supportIslands.size(); n++)
+        for (unsigned int n = 0; n < supportIslands.size(); n++)
         {
             islandOrderOptimizer.addPolygon(supportIslands[n][0]);
         }
         islandOrderOptimizer.optimize();
 
-        for(unsigned int n=0; n<supportIslands.size(); n++)
+        for (unsigned int n = 0; n < supportIslands.size(); n++)
         {
-            Polygons& island = supportIslands[islandOrderOptimizer.polyOrder[n]];
+            Polygons &island = supportIslands[islandOrderOptimizer.polyOrder[n]];
 
             Polygons supportLines;
             if (config.supportLineDistance > 0)
             {
-                switch(config.supportType)
+                switch (config.supportType)
                 {
                 case SUPPORT_TYPE_GRID:
                     if (config.supportLineDistance > config.extrusionWidth * 4)
                     {
-                        generateLineInfill(island, supportLines, config.extrusionWidth, config.supportLineDistance*2, config.infillOverlap, 0);
-                        generateLineInfill(island, supportLines, config.extrusionWidth, config.supportLineDistance*2, config.infillOverlap, 90);
-                    }else{
+                        generateLineInfill(island, supportLines, config.extrusionWidth, config.supportLineDistance * 2, config.infillOverlap, 0);
+                        generateLineInfill(island, supportLines, config.extrusionWidth, config.supportLineDistance * 2, config.infillOverlap, 90);
+                    }
+                    else
+                    {
                         generateLineInfill(island, supportLines, config.extrusionWidth, config.supportLineDistance, config.infillOverlap, (layerNr & 1) ? 0 : 90);
                     }
                     break;
@@ -949,7 +974,9 @@ private:
                     {
                         generateLineInfill(island, supportLines, config.extrusionWidth, config.supportLineDistance, config.infillOverlap + 150, 0);
                         generateLineInfill(island, supportLines, config.extrusionWidth, config.supportLineDistance, config.infillOverlap + 150, 90);
-                    }else{
+                    }
+                    else
+                    {
                         generateLineInfill(island, supportLines, config.extrusionWidth, config.supportLineDistance, config.infillOverlap, 0);
                     }
                     break;
@@ -966,7 +993,7 @@ private:
         }
     }
 
-    void addWipeTower(SliceDataStorage& storage, GCodePlanner& gcodeLayer, int layerNr, int prevExtruder)
+    void addWipeTower(SliceDataStorage &storage, GCodePlanner &gcodeLayer, int layerNr, int prevExtruder)
     {
         if (config.wipeTowerVolume < 1)
             return;
@@ -980,7 +1007,7 @@ private:
             gcodeLayer.setCombBoundary(&offsettedWipeTower);
         Polygons wipeTowerInset = offsettedWipeTower.offset(-config.extrusionWidth);
         Polygons fillPolygons;
-        generateLineInfill(wipeTowerInset, fillPolygons, config.extrusionWidth, config.extrusionWidth * 1.2, config.infillOverlap, 45 + 90 * (layerNr % 2));        //generateConcentricInfill(offsettedWipeTower, fillPolygons, config.extrusionWidth);
+        generateLineInfill(wipeTowerInset, fillPolygons, config.extrusionWidth, config.extrusionWidth * 1.2, config.infillOverlap, 45 + 90 * (layerNr % 2)); //generateConcentricInfill(offsettedWipeTower, fillPolygons, config.extrusionWidth);
         gcodeLayer.addPolygonsByOptimizer(fillPolygons, &wipeTowerConfig);
 
         //Make sure we wipe the old extruder on the wipe tower.
@@ -993,6 +1020,6 @@ private:
     }
 };
 
-}//namespace cura
+} //namespace cura
 
-#endif//FFF_PROCESSOR_H
+#endif //FFF_PROCESSOR_H
