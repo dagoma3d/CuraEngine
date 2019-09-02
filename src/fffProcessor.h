@@ -342,10 +342,9 @@ private:
                 double wipeTowerB = 2 * ((modelMaxX - modelMinX) / 2 + (modelMaxY - modelMinY) / 2 + 2 * wipeTowerOffset / 1000.0);
                 double wipeTowerC = -(wipeTowerVolume / layerThickness);
                 double wipeTowerDelta = wipeTowerB * wipeTowerB - 4 * wipeTowerA * wipeTowerC;
-                double w = 1000.0 * (-wipeTowerB + sqrt(wipeTowerDelta)) / (2 * wipeTowerA);
                 //double w = (wipeTowerVolume / (layerThickness * ((modelMaxX - modelMinX) / 2 + (modelMaxY - modelMinY) / 2))) * 1000.0;
-                w = std::max(static_cast<double>(config.extrusionWidth) * minSizeFactor, w);
-                double r = w / 2;
+                double r = 1000.0 * (-wipeTowerB + sqrt(wipeTowerDelta)) / (2 * wipeTowerA);
+                r = std::max(static_cast<double>(config.extrusionWidth) * minSizeFactor, r);
 
                 Point c0 = Point(storage.modelMax.x + wipeTowerOffset + r, (storage.modelMin.y + storage.modelMax.y) / 2);
                 Point c1 = Point((storage.modelMin.x + storage.modelMax.x) / 2, storage.modelMax.y + wipeTowerOffset + r);
@@ -359,7 +358,7 @@ private:
                     p.add(Point(c0.X + cos(2 * M_PI * i / m) * r, c0.Y + sin(2 * M_PI * i / m) * r));
                 //p.add(Point(storage.modelMax.x + wipeTowerOffset + w, storage.modelMax.y + wipeTowerOffset + w));
                 for (int i = 0; i <= n / 4; i++)
-                    p.add(Point(c2.X + cos(2 * M_PI * i / m) * (w + wipeTowerOffset), c2.Y + sin(2 * M_PI * i / m) * (w + wipeTowerOffset)));
+                    p.add(Point(c2.X + cos(2 * M_PI * i / m) * (2 * r + wipeTowerOffset), c2.Y + sin(2 * M_PI * i / m) * (2 * r + wipeTowerOffset)));
                 for (int i = n / 4; i <= 3 * n / 4; i++)
                     p.add(Point(c1.X + cos(2 * M_PI * i / m) * r, c1.Y + sin(2 * M_PI * i / m) * r));
 
