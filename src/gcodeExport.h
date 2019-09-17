@@ -18,6 +18,7 @@ class GCodeExport
 {
 private:
     FILE* f;
+    int startExtruder;
     double extrusionAmount;
     double extrusionPerMM[NB_EXTRUDERS];
     double retractionAmount[NB_EXTRUDERS];
@@ -60,6 +61,8 @@ public:
     void setFilename(const char* filename);
 
     bool isOpened();
+
+    void setStartExtruder(int startExtruder);
 
     void setExtrusion(int layerThickness, int diameter[NB_EXTRUDERS], int flow[NB_EXTRUDERS]);
 

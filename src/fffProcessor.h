@@ -111,6 +111,7 @@ private:
             gcode.setExtruderOffset(n, config.extruderOffset[n].p());
         gcode.setSwitchExtruderCode(config.preSwitchExtruderCode, config.postSwitchExtruderCode);
         gcode.setFlavor(config.gcodeFlavor);
+        gcode.setStartExtruder(config.startExtruder);
         gcode.setRetractionSettings(config.retractionAmount, config.retractionSpeed, config.retractionAmountExtruderSwitch, config.minimalExtrusionBeforeRetraction, config.retractionZHop, config.retractionAmountPrime);
         gcode.applyAccelerationSettings(config);
     }

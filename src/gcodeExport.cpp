@@ -13,6 +13,7 @@ namespace cura {
 GCodeExport::GCodeExport()
 : currentPosition(0,0,0), startPosition(INT32_MIN,INT32_MIN,0)
 {
+    startExtruder = 0;
     extrusionAmount = 0;
     for(unsigned int i = 0; i < NB_EXTRUDERS; i++)
     {
@@ -105,6 +106,11 @@ void GCodeExport::setFilename(const char* filename)
 bool GCodeExport::isOpened()
 {
     return f != nullptr;
+}
+
+void GCodeExport::setStartExtruder(int startExtruder)
+{
+    this->startExtruder = startExtruder;
 }
 
 void GCodeExport::setExtrusion(int layerThickness, int diameter[NB_EXTRUDERS], int flow[NB_EXTRUDERS])
@@ -371,7 +377,8 @@ void GCodeExport::switchExtruder(int newExtruder)
     if (flavor == GCODE_FLAVOR_MAKERBOT)
         fprintf(f, "M135 T%i\n", extruderNr);
     else
-        fprintf(f, "T%i\n\n", extruderNr);
+
+        fprintf(f, "T%i\n\n", extruderNr ^ startExtruder);
     writeCode(postSwitchExtruderCode[extruderNr].c_str());
 }
 

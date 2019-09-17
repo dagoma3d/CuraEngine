@@ -18,6 +18,7 @@ ConfigSettings *ConfigSettings::config = NULL;
 ConfigSettings::ConfigSettings()
 {
     config = this;
+    SETTING(startExtruder, 0);
     SETTING(nozzleSize, 400);
     SETTING(layerThickness, 100);
     SETTING(initialLayerThickness, 300);
