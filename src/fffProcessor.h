@@ -335,17 +335,12 @@ private:
             {
                 int n = 64;
                 double m = static_cast<double>(n);
-                double modelMaxX = storage.modelMax.x / 1000.0;
-                double modelMinX = storage.modelMin.x / 1000.0;
-                double modelMaxY = storage.modelMax.x / 1000.0;
-                double modelMinY = storage.modelMin.x / 1000.0;
-                double wipeTowerA = 4 + M_PI;
-                double wipeTowerB = 2 * ((modelMaxX - modelMinX) / 2 + (modelMaxY - modelMinY) / 2 + 2 * wipeTowerOffset / 1000.0);
+                double wipeTowerA = 2.0 * M_PI;
+                double wipeTowerB = INT2MM(storage.modelSize.x) + INT2MM(storage.modelSize.y) + (INT2MM(wipeTowerOffset) * M_PI);
                 double wipeTowerC = -(wipeTowerVolume / layerThickness);
                 double wipeTowerDelta = wipeTowerB * wipeTowerB - 4 * wipeTowerA * wipeTowerC;
-                //double w = (wipeTowerVolume / (layerThickness * ((modelMaxX - modelMinX) / 2 + (modelMaxY - modelMinY) / 2))) * 1000.0;
                 double r = 1000.0 * (-wipeTowerB + sqrt(wipeTowerDelta)) / (2 * wipeTowerA);
-                r = std::max(static_cast<double>(config.extrusionWidth) * minSizeFactor, r);
+                r = std::max(static_cast<double>(config.extrusionWidth), 2 * r);
 
                 Point c0 = Point(storage.modelMax.x + wipeTowerOffset + r, (storage.modelMin.y + storage.modelMax.y) / 2);
                 Point c1 = Point((storage.modelMin.x + storage.modelMax.x) / 2, storage.modelMax.y + wipeTowerOffset + r);
