@@ -6,7 +6,7 @@
 
 namespace cura {
 
-void generateSkirt(SliceDataStorage& storage, int distance, int extrusionWidth, int count, int minLength, int initialLayerHeight, int additionalLines);
+void generateSkirt(SliceDataStorage& storage, int distance, int extrusionWidth, int count, int minLength, int initialLayerHeight, int additionalLines, bool external=true);
 
 }//namespace cura
 
