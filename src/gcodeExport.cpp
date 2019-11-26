@@ -639,9 +639,11 @@ void GCodePlanner::writeGCode(bool liftHeadIfNeeded, int layerThickness)
     GCodePathConfig* lastConfig = nullptr;
     int extruder = gcode.getExtruderNr();
 
-    int wipeTowerMaxIndex = -1;
+    // Transform some infill lines of the wipe tower into pure moves (no extrusion).
+    // The goal is to decrease the noozle pressure before going back to the object.
+    unsigned int wipeTowerMaxIndex = 0;
     bool wipeTowerMaxIndexFound = false;
-    int nbLinesToIgnore = 0;
+    unsigned int nbLinesToIgnore = 0;
     double distanceToIgnore = 5.0;
     double distance = 0.0;
     for(unsigned int n=paths.size()-1; n>0; n--)
@@ -649,7 +651,7 @@ void GCodePlanner::writeGCode(bool liftHeadIfNeeded, int layerThickness)
         GCodePath* path = &paths[n];
         GCodePath* previousPath = &paths[n == 0 ? paths.size()-1: n - 1];
 
-        if(path->config->name == "WIPE-TOWER")
+        if(strcmp(path->config->name, "WIPE-TOWER") == 0)
         {
             if(!wipeTowerMaxIndexFound)
             {
@@ -755,7 +757,7 @@ void GCodePlanner::writeGCode(bool liftHeadIfNeeded, int layerThickness)
         }
         else
         {
-            if(path->config->name == "WIPE-TOWER" && n > wipeTowerMaxIndex - nbLinesToIgnore && n <= wipeTowerMaxIndex)
+            if(strcmp(path->config->name, "WIPE-TOWER") == 0 && n > wipeTowerMaxIndex - nbLinesToIgnore && n <= wipeTowerMaxIndex)
             {
                 //gcode.writeComment("WIPE-TOWER-PATH-INDEX:%d", n);
                 for(unsigned int i=0; i<path->points.size(); i++)
