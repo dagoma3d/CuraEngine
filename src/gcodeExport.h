@@ -95,7 +95,7 @@ public:
 
     void writeDelay(double timeAmount);
 
-    void writeMove(Point p, int speed, int lineWidth);
+    void writeMove(Point p, int speed, int lineWidth=0);
 
     void writeRetraction(bool force=false);
 

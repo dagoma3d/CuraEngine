@@ -639,6 +639,32 @@ void GCodePlanner::writeGCode(bool liftHeadIfNeeded, int layerThickness)
     GCodePathConfig* lastConfig = nullptr;
     int extruder = gcode.getExtruderNr();
 
+    int wipeTowerMaxIndex = -1;
+    bool wipeTowerMaxIndexFound = false;
+    int nbLinesToIgnore = 0;
+    double distanceToIgnore = 5.0;
+    double distance = 0.0;
+    for(unsigned int n=paths.size()-1; n>0; n--)
+    {
+        GCodePath* path = &paths[n];
+        GCodePath* previousPath = &paths[n == 0 ? paths.size()-1: n - 1];
+
+        if(path->config->name == "WIPE-TOWER")
+        {
+            if(!wipeTowerMaxIndexFound)
+            {
+                wipeTowerMaxIndex = n;
+                wipeTowerMaxIndexFound = true;
+            }
+            if(distanceToIgnore > 0)
+            {
+                distance = vSizeMM(path->points[0] - previousPath->points[0]);
+                distanceToIgnore -= distance;
+                nbLinesToIgnore += 2;
+            }
+        }
+    }
+
     for(unsigned int n=0; n<paths.size(); n++)
     {
         GCodePath* path = &paths[n];
@@ -726,10 +752,23 @@ void GCodePlanner::writeGCode(bool liftHeadIfNeeded, int layerThickness)
                 gcode.setZ(z + layerThickness * length / totalLength);
                 gcode.writeMove(path->points[i], speed, path->config->lineWidth);
             }
-        }else{
-            for(unsigned int i=0; i<path->points.size(); i++)
+        }
+        else
+        {
+            if(path->config->name == "WIPE-TOWER" && n > wipeTowerMaxIndex - nbLinesToIgnore && n <= wipeTowerMaxIndex)
             {
-                gcode.writeMove(path->points[i], speed, path->config->lineWidth);
+                //gcode.writeComment("WIPE-TOWER-PATH-INDEX:%d", n);
+                for(unsigned int i=0; i<path->points.size(); i++)
+                {
+                    gcode.writeMove(path->points[i], speed);
+                }
+            }
+            else
+            {
+                for(unsigned int i=0; i<path->points.size(); i++)
+                {
+                    gcode.writeMove(path->points[i], speed, path->config->lineWidth);
+                }
             }
         }
     }
