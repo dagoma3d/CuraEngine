@@ -614,6 +614,38 @@ private:
         }
 
         int volumeIdx = 0;
+
+        // Check if the storage ends with only one volume (this other must have  0 parts)
+        unsigned int singleColorLayer = totalLayers;
+        unsigned int singleColorVolumeIdx = 0;
+        if(storage.volumes.size() > 1)
+        {
+            for (unsigned int layerNr = totalLayers - 1; layerNr > 0; layerNr--)
+            {
+                bool hasEmptyVolume = false;
+                for (unsigned int volumeCnt = 0; volumeCnt < storage.volumes.size(); volumeCnt++)
+                {
+                    bool isEmptyVolume = storage.volumes[volumeCnt].layers[layerNr].parts.size() == 0;
+                    if(!isEmptyVolume)
+                        singleColorVolumeIdx = volumeCnt;
+                    hasEmptyVolume = hasEmptyVolume || isEmptyVolume;
+                }
+
+                if(hasEmptyVolume)
+                    singleColorLayer = layerNr;
+                else
+                    break;
+            }
+        }
+        // Just ensure we make the wipe tower for the first single color layer so that the extruder is correctly set
+        if(singleColorLayer != totalLayers)
+            singleColorLayer += 1;
+        if (singleColorVolumeIdx > 0)
+            singleColorVolumeIdx = (singleColorVolumeIdx + 1) % storage.volumes.size();
+/*        
+        gcode.writeComment("SINGLE-COLOR-LAYER:%d", singleColorLayer);
+        gcode.writeComment("SINGLE-COLOR-VOLUME-INDEX:%d", singleColorVolumeIdx);
+*/
         for (unsigned int layerNr = 0; layerNr < totalLayers; layerNr++)
         {
             cura::logProgress("export", layerNr + 1, totalLayers);
@@ -678,12 +710,27 @@ private:
             if (printSupportFirst)
                 addSupportToGCode(storage, gcodeLayer, layerNr);
 
-            for (unsigned int volumeCnt = 0; volumeCnt < storage.volumes.size(); volumeCnt++)
+            if(storage.volumes.size() > 1)
             {
-                if (volumeCnt > 0)
-                    volumeIdx = (volumeIdx + 1) % storage.volumes.size();
-                addVolumeLayerToGCode(storage, gcodeLayer, volumeIdx, layerNr);
+                if(layerNr < singleColorLayer)
+                {
+                    for (unsigned int volumeCnt = 0; volumeCnt < storage.volumes.size(); volumeCnt++)
+                    {
+                        if (volumeCnt > 0)
+                            volumeIdx = (volumeIdx + 1) % storage.volumes.size();
+                        addVolumeLayerToGCode(storage, gcodeLayer, volumeIdx, layerNr);
+                    }
+                }
+                else
+                {
+                    addVolumeLayerToGCode(storage, gcodeLayer, singleColorVolumeIdx, layerNr);
+                }
             }
+            else
+            {
+                addVolumeLayerToGCode(storage, gcodeLayer, 0, layerNr);
+            }
+
             if (!printSupportFirst)
                 addSupportToGCode(storage, gcodeLayer, layerNr);
 
