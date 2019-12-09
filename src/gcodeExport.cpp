@@ -646,25 +646,23 @@ void GCodePlanner::writeGCode(bool liftHeadIfNeeded, int layerThickness)
     unsigned int nbLinesToIgnore = 0;
     double distanceToIgnore = 5.0;
     double distance = 0.0;
-    if(paths.size() > 0){
-        for(unsigned int n=paths.size()-1; n>0; n--)
-        {
-            GCodePath* path = &paths[n];
-            GCodePath* previousPath = &paths[n == 0 ? paths.size()-1: n - 1];
+    for(unsigned int n=paths.size()-1; n<paths.size(); n--)
+    {
+        GCodePath* path = &paths[n];
+        GCodePath* previousPath = &paths[n == 0 ? paths.size()-1: n - 1];
 
-            if(strcmp(path->config->name, "WIPE-TOWER") == 0)
+        if(strcmp(path->config->name, "WIPE-TOWER") == 0)
+        {
+            if(!wipeTowerMaxIndexFound)
             {
-                if(!wipeTowerMaxIndexFound)
-                {
-                    wipeTowerMaxIndex = n;
-                    wipeTowerMaxIndexFound = true;
-                }
-                if(distanceToIgnore > 0)
-                {
-                    distance = vSizeMM(path->points[0] - previousPath->points[0]);
-                    distanceToIgnore -= distance;
-                    nbLinesToIgnore += 2;
-                }
+                wipeTowerMaxIndex = n;
+                wipeTowerMaxIndexFound = true;
+            }
+            if(distanceToIgnore > 0)
+            {
+                distance = vSizeMM(path->points[0] - previousPath->points[0]);
+                distanceToIgnore -= distance;
+                nbLinesToIgnore += 2;
             }
         }
     }
