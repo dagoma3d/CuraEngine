@@ -618,7 +618,7 @@ private:
         // Check if the storage ends with only one volume (this other must have  0 parts)
         unsigned int singleColorLayer = totalLayers;
         unsigned int singleColorVolumeIdx = 0;
-        if(storage.volumes.size() > 1)
+        if(storage.volumes.size() > 1 && totalLayers > 0)
         {
             for (unsigned int layerNr = totalLayers - 1; layerNr > 0; layerNr--)
             {
