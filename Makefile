@@ -38,8 +38,13 @@ EXECUTABLE = $(BUILD_DIR)/CuraEngine
 ifeq ($(OS),Windows_NT)
 	#For windows make it large address aware, which allows the process to use more then 2GB of memory.
 	EXECUTABLE := $(EXECUTABLE).exe
-	CFLAGS += -march=pentium4 -flto
-	LDFLAGS += -Wl,--large-address-aware -lm -lwsock32 -flto
+	ifeq ($(ARCH),x86)
+		CFLAGS += -march=pentium4 -flto
+		LDFLAGS += -Wl,--large-address-aware -lm -lwsock32 -flto
+	else
+		CFLAGS += -march=x86-64 -flto
+		LDFLAGS += -lm -lwsock32 -flto
+	endif
 	MKDIR_PREFIX = mkdir -p
 else
 	MKDIR_PREFIX = mkdir -p
