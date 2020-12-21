@@ -1,0 +1,4 @@
+#!/bin/bash
+
+#Given rotation matrix is a 15 degrees y rotation
+../../build/CuraEngine -v -p -m 0.9659258262890683,0.0,0.25881904510252074,0.0,1.0,0.0,-0.25881904510252074,0.0,0.9659258262890683 -o dagoma.gcode dagoma.stl
